@@ -1,47 +1,220 @@
-schema_version: "1.0.0"
+schema_version: "2.0.0"
 rules:
-  - rule_id: required_student_id
-    description: Student identifiers must be present where the contract requires them.
-    contract: sis_students
-    field: student_id
+  - rule_id: STU-001
+    name: Student identifier required
+    description: Every staged student row must contain a student identifier.
+    dataset: staging.sis_student
     rule_type: required
-    severity: error
-    parameters: {}
-  - rule_id: unique_student_natural_key
-    description: The SIS student natural key must be unique within a delivered file.
-    contract: sis_students
+    severity: critical
+    blocking: true
+    parameters:
+      field: student_id
+    remediation_guidance: Supply the source-system student identifier and resend the student row.
+    enabled: true
+  - rule_id: STU-002
+    name: Student identifier unique
+    description: A student identifier must occur once within each immutable source file.
+    dataset: staging.sis_student
     rule_type: unique
     severity: error
+    blocking: true
     parameters:
-      fields:
-        - student_id
-  - rule_id: valid_enrollment_dates
-    description: Exit date must not precede entry date when an exit date is present.
-    contract: sis_enrollment
+      fields: [student_id]
+    remediation_guidance: Remove duplicate student rows or provide distinct source identifiers.
+    enabled: true
+  - rule_id: STU-003
+    name: Student school exists
+    description: Student school identifiers must match the configured synthetic school namespace.
+    dataset: staging.sis_student
+    rule_type: school_exists
+    severity: error
+    blocking: true
+    parameters:
+      field: school_id
+      pattern: "^SYN-D[0-9]{2}-[EMH][0-9]{2}$"
+    remediation_guidance: Replace the school identifier with a registered school code.
+    enabled: true
+  - rule_id: ENR-001
+    name: Enrollment date order
+    description: Enrollment entry dates must not occur after exit dates.
+    dataset: staging.sis_enrollment
     rule_type: date_order
     severity: error
+    blocking: true
     parameters:
       start_field: entry_date
       end_field: exit_date
-  - rule_id: accepted_attendance_status
-    description: Attendance status must match the contract allowlist.
-    contract: attendance_events
-    field: attendance_status
+    remediation_guidance: Correct the entry or exit date so the enrollment period is chronological.
+    enabled: true
+  - rule_id: ENR-002
+    name: Accepted enrollment grade
+    description: Enrollment grade values must use the configured code set.
+    dataset: staging.sis_enrollment
     rule_type: accepted_values
     severity: error
-    parameters: {}
-  - rule_id: nonnegative_minutes_attended
-    description: Minutes attended cannot be negative.
-    contract: attendance_events
-    field: minutes_attended
-    rule_type: minimum
-    severity: error
+    blocking: true
     parameters:
-      minimum: 0
-  - rule_id: required_assessment_score
-    description: Every assessment event must include a scale score.
-    contract: assessments
-    field: scale_score
-    rule_type: required
+      field: grade_level
+      values: [PK, K, "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+    remediation_guidance: Map the source grade to an accepted grade code.
+    enabled: true
+  - rule_id: ENR-003
+    name: Enrollment periods do not overlap
+    description: Enrollment periods for the same student must not overlap.
+    dataset: staging.sis_enrollment
+    rule_type: no_overlap
     severity: error
-    parameters: {}
+    blocking: true
+    parameters:
+      entity_field: student_id
+      start_field: entry_date
+      end_field: exit_date
+    remediation_guidance: Close or adjust overlapping enrollment periods for the student.
+    enabled: true
+  - rule_id: ATT-001
+    name: Attendance student exists
+    description: Attendance student identifiers must exist in the staged student source version.
+    dataset: staging.attendance_event
+    rule_type: reference_exists
+    severity: critical
+    blocking: true
+    parameters:
+      field: student_id
+      reference_dataset: staging.sis_student
+      reference_field: student_id
+    remediation_guidance: Correct the student identifier or deliver the missing student record.
+    enabled: true
+  - rule_id: ATT-002
+    name: Attendance school exists
+    description: Attendance school identifiers must match the configured synthetic school namespace.
+    dataset: staging.attendance_event
+    rule_type: school_exists
+    severity: error
+    blocking: true
+    parameters:
+      field: school_id
+      pattern: "^SYN-D[0-9]{2}-[EMH][0-9]{2}$"
+    remediation_guidance: Replace the school identifier with a registered school code.
+    enabled: true
+  - rule_id: ATT-003
+    name: Attendance inside enrollment
+    description: Attendance dates must fall inside an enrollment period for the student.
+    dataset: staging.attendance_event
+    rule_type: within_enrollment
+    severity: error
+    blocking: true
+    parameters:
+      entity_field: student_id
+      date_field: instructional_date
+      enrollment_dataset: staging.sis_enrollment
+      enrollment_entity_field: student_id
+      start_field: entry_date
+      end_field: exit_date
+    remediation_guidance: Correct the attendance date or provide the applicable enrollment period.
+    enabled: true
+  - rule_id: ATT-004
+    name: Accepted attendance status
+    description: Attendance status must use the configured code set.
+    dataset: staging.attendance_event
+    rule_type: accepted_values
+    severity: error
+    blocking: true
+    parameters:
+      field: attendance_status
+      values: [present, absent_excused, absent_unexcused, tardy]
+    remediation_guidance: Map the source attendance status to an accepted code.
+    enabled: true
+  - rule_id: ATT-005
+    name: One daily attendance record
+    description: A student may have one attendance row per instructional date in a source version.
+    dataset: staging.attendance_event
+    rule_type: unique
+    severity: error
+    blocking: true
+    parameters:
+      fields: [student_id, instructional_date]
+    remediation_guidance: Remove or consolidate duplicate daily attendance rows.
+    enabled: true
+  - rule_id: ATT-006
+    name: Possible minutes positive
+    description: The configured possible instructional minutes must be positive.
+    dataset: staging.attendance_event
+    rule_type: positive_parameter
+    severity: critical
+    blocking: true
+    parameters:
+      parameter_name: possible_minutes
+      possible_minutes: 420
+    remediation_guidance: Configure possible_minutes as a positive number.
+    enabled: true
+  - rule_id: ATT-007
+    name: Attended minutes within possible minutes
+    description: Attended minutes must not exceed configured possible instructional minutes.
+    dataset: staging.attendance_event
+    rule_type: maximum
+    severity: error
+    blocking: true
+    parameters:
+      field: minutes_attended
+      maximum: 420
+    remediation_guidance: Correct attended minutes or the configured possible-minutes value.
+    enabled: true
+  - rule_id: ASM-001
+    name: Assessment student exists
+    description: Assessment student identifiers must exist in the staged student source version.
+    dataset: staging.assessment_event
+    rule_type: reference_exists
+    severity: critical
+    blocking: true
+    parameters:
+      field: student_id
+      reference_dataset: staging.sis_student
+      reference_field: student_id
+    remediation_guidance: Correct the student identifier or deliver the missing student record.
+    enabled: true
+  - rule_id: ASM-002
+    name: Assessment score range
+    description: Assessment scale scores must be inside the configured inclusive range.
+    dataset: staging.assessment_event
+    rule_type: range
+    severity: error
+    blocking: true
+    parameters:
+      field: scale_score
+      minimum: 0
+      maximum: 100
+    remediation_guidance: Correct the score or update the source-specific configured range.
+    enabled: true
+  - rule_id: PIPE-001
+    name: Source row-count change
+    description: Source row-count changes must remain within the configured percentage threshold.
+    dataset: pipeline
+    rule_type: row_count_change
+    severity: warning
+    blocking: false
+    parameters:
+      percent_threshold: 25
+    remediation_guidance: Confirm that the source volume change is expected before downstream use.
+    enabled: true
+  - rule_id: PIPE-002
+    name: Required source file arrived
+    description: Every configured required source file must arrive in the pipeline run.
+    dataset: pipeline
+    rule_type: required_file
+    severity: critical
+    blocking: true
+    parameters:
+      filenames: [students.csv, enrollments.csv, attendance_events.jsonl, assessments.xlsx]
+    remediation_guidance: Deliver the missing required file and rerun ingestion.
+    enabled: true
+  - rule_id: PIPE-003
+    name: Known source schema version
+    description: Source rows must use the configured schema version without undeclared fields.
+    dataset: pipeline
+    rule_type: schema_version
+    severity: error
+    blocking: true
+    parameters:
+      detect_unknown_fields: true
+    remediation_guidance: Register the new schema contract or remove undeclared source fields.
+    enabled: true

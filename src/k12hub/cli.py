@@ -19,6 +19,12 @@ from k12hub.ingestion import (
 )
 from k12hub.logging_config import configure_logging
 from k12hub.object_store import MinioObjectStorageClient
+from k12hub.quality import (
+    DataQualityError,
+    DataQualityService,
+    PostgresQualityStore,
+    QualityRunResult,
+)
 from k12hub.staging import (
     PostgresStagingMetadataStore,
     StagingLoadError,
@@ -93,6 +99,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("config"),
     )
+    quality_parser = subparsers.add_parser(
+        "validate-data",
+        help="run configured data-quality rules for a staged pipeline run",
+    )
+    quality_parser.add_argument("--pipeline-run-id", type=UUID, required=True)
+    quality_parser.add_argument(
+        "--config-dir",
+        type=Path,
+        default=Path("config"),
+    )
     return parser
 
 
@@ -106,6 +122,27 @@ def _print_staging_result(result: StagingResult) -> None:
         f"loaded={result.loaded} "
         f"rejected={result.rejected}"
     )
+
+
+def _print_quality_result(result: QualityRunResult) -> None:
+    print(
+        "Data quality validation complete: "
+        f"pipeline_run_id={result.pipeline_run_id} "
+        f"quality_run_id={result.data_quality_rule_run_id} "
+        f"status={result.status} "
+        f"rules={result.enabled_rules} "
+        f"failures={result.failures} "
+        f"blocking_failures={result.blocking_failures}"
+    )
+    print("Rule results:")
+    for summary in result.rule_summaries:
+        outcome = "PASS" if summary.failures == 0 else "FAIL"
+        print(
+            f"  {summary.rule_id:<8} {outcome:<4} "
+            f"severity={summary.severity:<8} "
+            f"blocking={'yes' if summary.blocking else 'no':<3} "
+            f"evaluated={summary.evaluated} failures={summary.failures}"
+        )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -213,6 +250,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             engine.dispose()
         _print_staging_result(staging_result)
         return 0
+    if args.command == "validate-data":
+        settings = load_settings()
+        configure_logging(settings)
+        try:
+            configuration = load_configuration(args.config_dir)
+        except ConfigurationFileError as error:
+            print(f"Configuration invalid: {error}", file=sys.stderr)
+            return 1
+        engine = create_database_engine(settings.postgres)
+        try:
+            quality_result = DataQualityService(PostgresQualityStore(engine)).validate(
+                args.pipeline_run_id,
+                configuration,
+            )
+        except DataQualityError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        finally:
+            engine.dispose()
+        _print_quality_result(quality_result)
+        return 1 if quality_result.blocking_failures else 0
     return 2
 
 

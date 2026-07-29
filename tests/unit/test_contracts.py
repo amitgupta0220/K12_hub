@@ -31,6 +31,29 @@ def test_complete_configuration_is_valid() -> None:
         set(metric.model_fields_set) == {"name", "description"}
         for metric in configuration.metrics.metrics
     )
+    assert {rule.rule_id for rule in configuration.data_quality_rules.rules} == {
+        "STU-001",
+        "STU-002",
+        "STU-003",
+        "ENR-001",
+        "ENR-002",
+        "ENR-003",
+        "ATT-001",
+        "ATT-002",
+        "ATT-003",
+        "ATT-004",
+        "ATT-005",
+        "ATT-006",
+        "ATT-007",
+        "ASM-001",
+        "ASM-002",
+        "PIPE-001",
+        "PIPE-002",
+        "PIPE-003",
+    }
+    assert all(
+        rule.name and rule.remediation_guidance for rule in configuration.data_quality_rules.rules
+    )
 
 
 def test_contract_defines_required_privacy_metadata() -> None:

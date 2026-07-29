@@ -22,6 +22,9 @@ EXPECTED_TABLES = {
         "source_file",
         "row_count_reconciliation",
         "access_event",
+        "data_quality_rule_run",
+        "data_quality_rule_result",
+        "data_quality_failure",
     },
     "quarantine": {"rejected_record"},
     "staging": {
@@ -128,6 +131,30 @@ def _assert_expected_database_objects(settings: PostgresSettings) -> None:
                 column["name"] for column in inspector.get_columns(table_name, schema="staging")
             }
             assert required_staging_columns <= staging_columns
+
+        rule_columns = {
+            column["name"]
+            for column in inspector.get_columns("data_quality_rule", schema="metadata")
+        }
+        assert {"dataset", "blocking", "remediation_guidance"} <= rule_columns
+
+        quality_failure_columns = {
+            column["name"]
+            for column in inspector.get_columns("data_quality_failure", schema="audit")
+        }
+        assert {
+            "data_quality_rule_run_id",
+            "pipeline_run_id",
+            "source_file_id",
+            "source_row_number",
+            "rule_id",
+            "rule_code",
+            "severity",
+            "blocking",
+            "message",
+            "remediation_guidance",
+            "raw_payload",
+        } <= quality_failure_columns
 
         assert inspector.get_indexes("pipeline_run", schema="audit")
         assert inspector.get_indexes("source_file", schema="audit")

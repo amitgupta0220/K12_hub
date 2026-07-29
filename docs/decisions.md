@@ -283,3 +283,38 @@ commit roll back every effect of that file attempt. File structure failures stop
 writes. Memory usage is proportional to one raw object because parsing completes before its
 transaction begins; future very large sources may require a streaming parser with the same
 transaction and idempotency boundary.
+
+---
+
+## ADR-0011: Separate blocking quarantine rules from non-blocking quality warnings
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Staged source data needs reusable validation across student, enrollment, attendance, assessment,
+and pipeline-level conditions. Some failures make downstream use unsafe, while others—such as an
+unexpected source-volume change—require review without discarding otherwise valid rows. Rule
+behavior must remain configurable and auditable rather than being embedded in CLI or dashboard
+code.
+
+### Decision
+
+Define rule identity, dataset, evaluator type, severity, blocking behavior, parameters,
+remediation guidance, and enablement in `config/data_quality_rules.yml`. Dispatch these validated
+definitions through a finite allowlist of Python evaluators; do not execute configuration as code
+or SQL.
+
+Persist every invocation as an immutable quality run with one aggregate result per enabled rule
+and detailed audit failures. Copy only blocking row-level failures into
+`quarantine.rejected_record`. Retain non-blocking failures in staging and quality audit history,
+and return a successful overall status when no blocking failures exist.
+
+### Consequences
+
+Operators and future dashboards can distinguish warnings from data that must be withheld.
+Disabling or tuning a supported rule requires configuration rather than evaluator changes, while a
+new rule type still requires typed code and tests. Repeated validation remains auditable and the
+quarantine uniqueness key prevents duplicate blocking records for the same immutable source row
+and rule.

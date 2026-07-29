@@ -605,14 +605,14 @@ def _inject_errors(
                 )
                 injected[error_type] += 1
         elif error_type == "unknown_school_code":
+            for index in rng.sample(range(options.students), min(count, options.students)):
+                records.students[index].school_id = "SYN-UNKNOWN-SCHOOL"
+                injected[error_type] += 1
+        elif error_type == "invalid_grade":
             for index in rng.sample(
                 range(len(records.enrollments)), min(count, len(records.enrollments))
             ):
-                records.enrollments[index].school_id = "SYN-UNKNOWN-SCHOOL"
-                injected[error_type] += 1
-        elif error_type == "invalid_grade":
-            for index in rng.sample(range(options.students), min(count, options.students)):
-                records.students[index].grade_level = "99"
+                records.enrollments[index].grade_level = "99"
                 injected[error_type] += 1
         elif error_type == "overlapping_enrollment":
             for index in rng.sample(

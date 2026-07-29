@@ -11,7 +11,8 @@ infrastructure, Alembic-managed operational metadata schemas, environment-based 
 strict configuration-driven source contracts, deterministic synthetic-data generation, structured
 logging, idempotent raw-file ingestion into MinIO with PostgreSQL audit metadata, connectivity
 checks, contract-driven CSV/JSON Lines/XLSX parsing, transactional staging loads, row quarantine
-and reconciliation, and quality tooling. Analytical models are not implemented yet.
+and reconciliation, a configuration-driven data-quality rule engine with dashboard-ready audit
+results, and quality tooling. Analytical models are not implemented yet.
 
 ## Basic setup
 
@@ -64,6 +65,15 @@ source contracts, preserves every original row in JSONB, loads valid rows into t
 staging tables, quarantines malformed rows, and writes discovered/parsed/loaded/rejected
 reconciliation counts. Retrying `load-staging` with the same pipeline run is idempotent.
 
+Validate the staged rows with the enabled YAML rules:
+
+```sh
+python -m k12hub.cli validate-data --pipeline-run-id <id>
+```
+
+Blocking failures are copied to quarantine. Non-blocking failures remain available and are flagged
+in the audit tables. See `docs/data_quality_rules.md` for the rule catalog and generator mapping.
+
 | Service | Purpose | Local port |
 | --- | --- | --- |
 | PostgreSQL | Warehouse and operational metadata database (`k12hub`) | `5432` |
@@ -90,11 +100,13 @@ make db-current
 make db-downgrade
 make migration-test
 make ingest-demo
+make validate-demo
 python -m k12hub.cli validate-config
 python -m k12hub.cli generate-data --help
 python -m k12hub.cli ingest --help
 python -m k12hub.cli load-staging --help
 python -m k12hub.cli run-ingestion --help
+python -m k12hub.cli validate-data --help
 ```
 
 ## Synthetic-data disclaimer

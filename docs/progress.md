@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 7 — parse files and load staging tables.
+Prompt 8 — configuration-driven data-quality validation.
 
 ## Completed work
 
@@ -83,6 +83,22 @@ Prompt 7 — parse files and load staging tables.
 - Added unit and integration coverage for all formats, malformed records, missing columns,
   normalization, MinIO-only reads, idempotent retry, reconciliation, and transaction rollback.
 - Documented staging usage, ownership, flow, atomicity, and retry behavior.
+- Expanded the declarative quality-rule schema with names, datasets, blocking behavior,
+  remediation guidance, enablement, and reusable evaluator types.
+- Added 18 initial student, enrollment, attendance, assessment, and pipeline-level quality rules.
+- Added a reusable Python rule engine with configuration-driven required, uniqueness, reference,
+  date, accepted-value, overlap, range, volume, required-file, and schema-version evaluators.
+- Added auditable quality-run, rule-result, and failure persistence with stable rule identifiers.
+- Added blocking-failure quarantine while retaining non-blocking warnings in staging and audit
+  history.
+- Added `python -m k12hub.cli validate-data --pipeline-run-id <id>` with rule-by-rule terminal
+  output and blocking-aware exit behavior.
+- Added the reproducible `make validate-demo` workflow and documented the complete quality-rule
+  catalog, persistence model, and synthetic error-injection mapping.
+- Added unit and integration coverage for clean data, each injected error type, non-blocking
+  volume warnings, persistence, quarantine behavior, and rerun safety.
+- Changed Make dependency installation to use a `pyproject.toml`-sensitive environment stamp so
+  repeated quality commands do not require unnecessary package-index access.
 
 ## Validation results
 
@@ -174,6 +190,20 @@ Prompt 7 — parse files and load staging tables.
   names were added to retry-key constraint names before the successful migration gate.
 - The first full-demo invocation used an incorrect generated run-directory suffix and produced an
   audited failure with no loaded files; rerunning with the exact generated path passed.
+- `make validate-demo` completed successfully for a 25-student synthetic run: 4 raw files uploaded,
+  4,457 rows discovered, parsed, and loaded, and zero staging rejections.
+- The demo evaluated all 18 enabled quality rules with zero blocking failures and overall status
+  `passed`.
+- `PIPE-001` correctly recorded four non-blocking row-count-change warnings because the persistent
+  local database contained a materially smaller prior run under the same pipeline name.
+- The first Prompt 8 `make verify` attempt stopped on Ruff formatting findings in
+  `tests/unit/test_quality.py`; the file was formatted before rerunning the complete gate.
+- `make verify` passed after the formatting correction.
+- Ruff formatting passed for 34 files and Ruff lint passed with no findings.
+- mypy passed with no issues in 29 source files.
+- pytest passed 65 unit tests with 11 integration tests deselected; unit-test coverage was 80%.
+- The complete integration suite passed 11 tests against local PostgreSQL and MinIO; integration
+  coverage was 85%.
 
 ## Known issues
 
@@ -183,6 +213,6 @@ Prompt 7 — parse files and load staging tables.
 
 ## Next recommended phase
 
-Provide Prompt 8. No generated student-level data is tracked in version control. No Airflow, dbt
-models, Streamlit, conformed student warehouse tables, conformed attendance warehouse tables, or
-analytical models have been started.
+Provide the next numbered prompt. No generated student-level data is tracked in version control.
+No Airflow, dbt models, Streamlit, conformed student warehouse tables, conformed attendance
+warehouse tables, or analytical models have been started.

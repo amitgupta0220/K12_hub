@@ -112,11 +112,11 @@ def test_all_enabled_errors_are_present(tmp_path: Path) -> None:
     student_id_counts = Counter(row["student_id"] for row in students if row["student_id"])
     assert any(count > 1 for count in student_id_counts.values())
     assert any(not row["student_id"] for row in students)
-    assert any(row["grade_level"] == "99" for row in students)
+    assert any(row["school_id"] == "SYN-UNKNOWN-SCHOOL" for row in students)
     assert "unexpected_schema_drift" in students[0] or any(
         row.get("unexpected_schema_drift") == "injected" for row in students
     )
-    assert any(row["school_id"] == "SYN-UNKNOWN-SCHOOL" for row in enrollments)
+    assert any(row["grade_level"] == "99" for row in enrollments)
     assert len(enrollments) > result.manifest["baseline_record_counts"]["enrollments.csv"]
     assert any(row["student_id"] not in valid_student_ids for row in attendance)
     attendance_keys = Counter(

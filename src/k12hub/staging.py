@@ -259,8 +259,6 @@ def _parse_field(value: Any, field: ContractField) -> Any:
     else:  # pragma: no cover - the validated enum makes this unreachable
         raise ValueError(f"unsupported data type {field.data_type}")
 
-    if field.accepted_values is not None and str(parsed) not in field.accepted_values:
-        raise ValueError(f"{field.name} value {parsed!r} is not accepted")
     return parsed
 
 
@@ -271,18 +269,6 @@ def _parse_record(
     contract: SourceContract,
 ) -> ParsedRow | RejectedRow:
     try:
-        missing_values = [
-            field_name
-            for field_name in contract.required_fields
-            if normalized_record.get(field_name) is None
-            or (
-                isinstance(normalized_record.get(field_name), str)
-                and not str(normalized_record[field_name]).strip()
-            )
-        ]
-        if missing_values:
-            raise ValueError(f"required values missing: {', '.join(missing_values)}")
-
         business_values = {
             field.name: _parse_field(normalized_record.get(field.name), field)
             for field in contract.expected_fields

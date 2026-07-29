@@ -73,9 +73,18 @@ class RuleType(str, Enum):
 
     REQUIRED = "required"
     UNIQUE = "unique"
+    SCHOOL_EXISTS = "school_exists"
+    REFERENCE_EXISTS = "reference_exists"
     ACCEPTED_VALUES = "accepted_values"
     DATE_ORDER = "date_order"
-    MINIMUM = "minimum"
+    NO_OVERLAP = "no_overlap"
+    WITHIN_ENROLLMENT = "within_enrollment"
+    POSITIVE_PARAMETER = "positive_parameter"
+    MAXIMUM = "maximum"
+    RANGE = "range"
+    ROW_COUNT_CHANGE = "row_count_change"
+    REQUIRED_FILE = "required_file"
+    SCHEMA_VERSION = "schema_version"
 
 
 class Severity(str, Enum):
@@ -163,13 +172,16 @@ class SourceContract(StrictModel):
 class DataQualityRule(StrictModel):
     """One declarative data-quality rule."""
 
-    rule_id: StrictStr
+    rule_id: StrictStr = Field(pattern=r"^[A-Z]{3,4}-[0-9]{3}$")
+    name: StrictStr
     description: StrictStr
-    contract: StrictStr
-    field: StrictStr | None = None
+    dataset: StrictStr = Field(pattern=r"^(staging\.[a-z][a-z0-9_]*|pipeline)$")
     rule_type: RuleType
     severity: Severity
+    blocking: StrictBool
     parameters: dict[StrictStr, Any] = Field(default_factory=dict)
+    remediation_guidance: StrictStr
+    enabled: StrictBool = True
 
 
 class DataQualityRulesConfig(StrictModel):
@@ -272,20 +284,15 @@ class ConfigurationBundle(StrictModel):
         if missing_contracts:
             raise ValueError(f"source systems reference missing contracts: {missing_contracts}")
 
+        staging_datasets = {
+            contract.destination_staging_table for contract in self.contracts.values()
+        }
         for rule in self.data_quality_rules.rules:
-            referenced_contract = self.contracts.get(rule.contract)
-            if referenced_contract is None:
+            if rule.dataset != "pipeline" and rule.dataset not in staging_datasets:
                 raise ValueError(
-                    f"data-quality rule {rule.rule_id!r} references unknown contract "
-                    f"{rule.contract!r}"
+                    f"data-quality rule {rule.rule_id!r} references unknown dataset "
+                    f"{rule.dataset!r}"
                 )
-            if rule.field is not None:
-                field_names = {field.name for field in referenced_contract.expected_fields}
-                if rule.field not in field_names:
-                    raise ValueError(
-                        f"data-quality rule {rule.rule_id!r} references unknown field "
-                        f"{rule.field!r}"
-                    )
         return self
 
 

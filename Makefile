@@ -1,13 +1,17 @@
 VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
+INSTALL_STAMP := $(VENV)/.installed
 
-.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current ingest-demo
+.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current ingest-demo validate-demo
 
-install:
+install: $(INSTALL_STAMP)
+
+$(INSTALL_STAMP): pyproject.toml
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
 	$(PIP) install -e ".[dev]"
+	@touch $(INSTALL_STAMP)
 
 format: install
 	$(PYTHON) -m ruff format src tests scripts migrations
@@ -63,3 +67,11 @@ db-current: install
 ingest-demo: install
 	$(PYTHON) -m k12hub.cli generate-data --seed 2026 --students 25 --school-year 2025-2026 --output-directory data/generated/ingest-demo
 	$(PYTHON) -m k12hub.cli ingest --input-dir data/generated/ingest-demo/run-f57b686f98cfdb28 --source all
+
+validate-demo: install
+	$(PYTHON) -m k12hub.cli generate-data --seed 8800 --students 25 --school-year 2025-2026 --output-directory data/generated/validate-demo
+	@output="$$($(PYTHON) -m k12hub.cli run-ingestion --input-dir data/generated/validate-demo/run-fade190e3f52284e)"; \
+		printf "%s\n" "$$output"; \
+		pipeline_run_id="$$(printf "%s\n" "$$output" | sed -n "s/.*pipeline_run_id=\\([^ ]*\\).*/\\1/p")"; \
+		test -n "$$pipeline_run_id"; \
+		$(PYTHON) -m k12hub.cli validate-data --pipeline-run-id "$$pipeline_run_id"
