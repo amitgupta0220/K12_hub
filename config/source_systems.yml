@@ -1,0 +1,21 @@
+schema_version: "1.0.0"
+source_systems:
+  - name: simulated_sis
+    description: Synthetic student information system exports for portfolio demonstrations.
+    data_category: synthetic
+    enabled: true
+    contracts:
+      - sis_students
+      - sis_enrollment
+  - name: simulated_attendance
+    description: Synthetic daily attendance event exports.
+    data_category: synthetic
+    enabled: true
+    contracts:
+      - attendance_events
+  - name: simulated_assessments
+    description: Synthetic student assessment event exports.
+    data_category: synthetic
+    enabled: true
+    contracts:
+      - assessments

@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 3 — operational metadata and warehouse schema initialization.
+Prompt 4 — source contracts and configuration models.
 
 ## Completed work
 
@@ -32,6 +32,12 @@ Prompt 3 — operational metadata and warehouse schema initialization.
 - Kept `raw`, `staging`, `core`, and `mart` empty for future dbt-managed analytical models.
 - Added SQLAlchemy database URL, engine, and transaction utilities.
 - Added migration lifecycle commands and unit and integration coverage.
+- Added registered simulated source systems and versioned contracts for SIS students, SIS
+  enrollment, attendance events, and assessments.
+- Defined declarative data-quality rules, privacy controls, and metric names and descriptions.
+- Added strict typed models for YAML loading, per-file validation, and cross-file reference checks.
+- Added `python -m k12hub.cli validate-config`.
+- Added valid, malformed, unknown-field, invalid-reference, and invalid-type contract tests.
 
 ## Validation results
 
@@ -66,6 +72,16 @@ Prompt 3 — operational metadata and warehouse schema initialization.
 - mypy passed with no issues in 12 source files.
 - pytest passed 23 unit tests with 4 integration tests deselected.
 - Unit-test coverage remained 93%.
+- `make verify` passed after all Prompt 4 changes.
+- Ruff formatting and lint checks passed for 17 files.
+- mypy passed with no issues in 15 source files.
+- pytest passed 30 unit tests with 4 integration tests deselected.
+- Unit-test coverage was 87%.
+- `.venv/bin/python -m k12hub.cli validate-config` passed with 4 contracts, 6 data-quality rules,
+  and 6 metric definitions.
+- The invalid-type gate changed a temporary contract fixture from a string schema version to an
+  integer; the targeted validation test passed by rejecting the invalid type, and the valid
+  contract remained restored.
 
 ## Known issues
 
@@ -76,4 +92,4 @@ Prompt 3 — operational metadata and warehouse schema initialization.
 ## Next recommended phase
 
 Provide the next numbered project prompt. No Airflow, dbt models, Streamlit, ingestion logic,
-student tables, attendance tables, or analytical tables have been started.
+student tables, attendance tables, analytical tables, or metric calculations have been started.

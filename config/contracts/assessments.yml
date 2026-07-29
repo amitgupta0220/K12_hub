@@ -1,0 +1,59 @@
+source_name: assessments
+source_system: simulated_assessments
+description: Synthetic student assessment-event export.
+file_pattern: "assessments_*.xlsx"
+file_format: xlsx
+expected_fields:
+  - name: assessment_event_id
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: student_id
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: school_id
+    data_type: string
+    sensitive_classification: quasi_identifier
+  - name: academic_year
+    data_type: string
+    sensitive_classification: non_sensitive
+  - name: assessment_name
+    data_type: string
+    sensitive_classification: non_sensitive
+  - name: subject
+    data_type: string
+    accepted_values:
+      - mathematics
+      - reading
+      - science
+      - social_studies
+      - writing
+    sensitive_classification: non_sensitive
+  - name: assessment_date
+    data_type: date
+    sensitive_classification: quasi_identifier
+  - name: scale_score
+    data_type: decimal
+    sensitive_classification: sensitive
+  - name: performance_level
+    data_type: string
+    accepted_values:
+      - below_standard
+      - approaching_standard
+      - meets_standard
+      - exceeds_standard
+    sensitive_classification: sensitive
+required_fields:
+  - assessment_event_id
+  - student_id
+  - school_id
+  - academic_year
+  - assessment_name
+  - subject
+  - assessment_date
+  - scale_score
+  - performance_level
+natural_key:
+  - assessment_event_id
+expected_grain: one row per student assessment event
+schema_version: "1.0.0"
+destination_staging_table: staging.assessments

@@ -1,0 +1,26 @@
+schema_version: "1.0.0"
+small_group_threshold: 10
+direct_identifier_fields:
+  - assessment_event_id
+  - enrollment_id
+  - first_name
+  - last_name
+  - local_student_number
+  - student_id
+prohibited_dashboard_fields:
+  - assessment_event_id
+  - birth_date
+  - enrollment_id
+  - first_name
+  - last_name
+  - local_student_number
+  - raw_payload
+  - student_id
+allowed_aggregate_dimensions:
+  - academic_year
+  - assessment_name
+  - attendance_status
+  - grade_level
+  - performance_level
+  - school_id
+  - subject

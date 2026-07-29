@@ -1,0 +1,67 @@
+source_name: sis_students
+source_system: simulated_sis
+description: Synthetic SIS student export.
+file_pattern: "sis_students_*.csv"
+file_format: csv
+expected_fields:
+  - name: student_id
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: local_student_number
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: first_name
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: last_name
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: birth_date
+    data_type: date
+    sensitive_classification: sensitive
+  - name: gender
+    data_type: string
+    accepted_values:
+      - female
+      - male
+      - nonbinary
+      - not_reported
+    sensitive_classification: sensitive
+  - name: grade_level
+    data_type: string
+    accepted_values:
+      - PK
+      - K
+      - "01"
+      - "02"
+      - "03"
+      - "04"
+      - "05"
+      - "06"
+      - "07"
+      - "08"
+      - "09"
+      - "10"
+      - "11"
+      - "12"
+    sensitive_classification: quasi_identifier
+  - name: school_id
+    data_type: string
+    sensitive_classification: quasi_identifier
+  - name: active
+    data_type: boolean
+    sensitive_classification: non_sensitive
+required_fields:
+  - student_id
+  - local_student_number
+  - first_name
+  - last_name
+  - birth_date
+  - grade_level
+  - school_id
+  - active
+natural_key:
+  - student_id
+expected_grain: one row per student
+schema_version: "1.0.0"
+destination_staging_table: staging.sis_students

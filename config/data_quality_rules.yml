@@ -1,0 +1,47 @@
+schema_version: "1.0.0"
+rules:
+  - rule_id: required_student_id
+    description: Student identifiers must be present where the contract requires them.
+    contract: sis_students
+    field: student_id
+    rule_type: required
+    severity: error
+    parameters: {}
+  - rule_id: unique_student_natural_key
+    description: The SIS student natural key must be unique within a delivered file.
+    contract: sis_students
+    rule_type: unique
+    severity: error
+    parameters:
+      fields:
+        - student_id
+  - rule_id: valid_enrollment_dates
+    description: Exit date must not precede entry date when an exit date is present.
+    contract: sis_enrollment
+    rule_type: date_order
+    severity: error
+    parameters:
+      start_field: entry_date
+      end_field: exit_date
+  - rule_id: accepted_attendance_status
+    description: Attendance status must match the contract allowlist.
+    contract: attendance_events
+    field: attendance_status
+    rule_type: accepted_values
+    severity: error
+    parameters: {}
+  - rule_id: nonnegative_minutes_attended
+    description: Minutes attended cannot be negative.
+    contract: attendance_events
+    field: minutes_attended
+    rule_type: minimum
+    severity: error
+    parameters:
+      minimum: 0
+  - rule_id: required_assessment_score
+    description: Every assessment event must include a scale score.
+    contract: assessments
+    field: scale_score
+    rule_type: required
+    severity: error
+    parameters: {}

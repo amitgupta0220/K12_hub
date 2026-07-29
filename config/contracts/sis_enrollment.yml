@@ -1,0 +1,62 @@
+source_name: sis_enrollment
+source_system: simulated_sis
+description: Synthetic SIS enrollment-period export.
+file_pattern: "sis_enrollment_*.csv"
+file_format: csv
+expected_fields:
+  - name: enrollment_id
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: student_id
+    data_type: string
+    sensitive_classification: direct_identifier
+  - name: school_id
+    data_type: string
+    sensitive_classification: quasi_identifier
+  - name: academic_year
+    data_type: string
+    sensitive_classification: non_sensitive
+  - name: grade_level
+    data_type: string
+    accepted_values:
+      - PK
+      - K
+      - "01"
+      - "02"
+      - "03"
+      - "04"
+      - "05"
+      - "06"
+      - "07"
+      - "08"
+      - "09"
+      - "10"
+      - "11"
+      - "12"
+    sensitive_classification: quasi_identifier
+  - name: entry_date
+    data_type: date
+    sensitive_classification: quasi_identifier
+  - name: exit_date
+    data_type: date
+    sensitive_classification: quasi_identifier
+  - name: enrollment_status
+    data_type: string
+    accepted_values:
+      - active
+      - exited
+      - future
+    sensitive_classification: non_sensitive
+required_fields:
+  - enrollment_id
+  - student_id
+  - school_id
+  - academic_year
+  - grade_level
+  - entry_date
+  - enrollment_status
+natural_key:
+  - enrollment_id
+expected_grain: one row per enrollment period
+schema_version: "1.0.0"
+destination_staging_table: staging.sis_enrollment

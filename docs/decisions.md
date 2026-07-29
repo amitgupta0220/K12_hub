@@ -153,3 +153,34 @@ Operational state can evolve independently from warehouse transformations, and m
 roll back atomically. Empty analytical schemas make the future ownership boundary visible without
 prematurely creating models. Integration tests require permission to create and remove a temporary
 local PostgreSQL database.
+
+---
+
+## ADR-0007: Define source behavior through strict versioned YAML contracts
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Future ingestion and validation behavior must be reproducible across multiple simulated source
+formats while keeping schema expectations, privacy classifications, quality rules, and metrics
+reviewable before any file processing exists.
+
+### Decision
+
+Store source registrations, file contracts, data-quality rules, privacy controls, and metric
+definitions as versioned YAML. Validate them with frozen Pydantic models that reject unknown keys
+by default. Permit open-ended keys only inside the explicitly declared data-quality rule
+`parameters` mapping.
+
+Cross-validate source registrations, contract ownership, required fields, natural keys,
+data-quality rule references, and privacy lists. Keep metrics limited to names and descriptions
+until calculations are implemented in a later phase.
+
+### Consequences
+
+Invalid or inconsistent configuration fails before ingestion begins, and contract changes are
+visible in version control. Adding new formats, field types, rule types, or configuration keys
+requires an intentional model change and tests. The Python 3.9 runtime requires a small annotation
+evaluation compatibility package for Pydantic's modern type syntax.

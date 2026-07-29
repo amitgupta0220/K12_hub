@@ -1,0 +1,14 @@
+schema_version: "1.0.0"
+metrics:
+  - name: student_count
+    description: Distinct students represented in an approved aggregate result.
+  - name: enrollment_count
+    description: Enrollment periods represented in an approved aggregate result.
+  - name: attendance_rate
+    description: Aggregate share of scheduled instructional time attended.
+  - name: chronic_absence_rate
+    description: Aggregate share of students meeting the configured chronic-absence definition.
+  - name: assessment_event_count
+    description: Student assessment events represented in an approved aggregate result.
+  - name: assessment_proficiency_rate
+    description: Aggregate share of assessment events meeting or exceeding the approved standard.

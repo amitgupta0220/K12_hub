@@ -8,8 +8,8 @@ K-12 Data Reliability Hub is an OAISD-inspired, local-first portfolio project de
 
 The repository currently provides the typed Python package foundation, local PostgreSQL and MinIO
 infrastructure, Alembic-managed operational metadata schemas, environment-based configuration,
-structured logging, connectivity checks, and quality tooling. Data pipelines and analytical
-models are not implemented yet.
+strict configuration-driven source contracts, structured logging, connectivity checks, and
+quality tooling. Data pipelines and analytical models are not implemented yet.
 
 ## Basic setup
 
@@ -50,6 +50,7 @@ make db-upgrade
 make db-current
 make db-downgrade
 make migration-test
+python -m k12hub.cli validate-config
 ```
 
 ## Synthetic-data disclaimer
