@@ -6,7 +6,7 @@ K-12 Data Reliability Hub is an OAISD-inspired, local-first portfolio project de
 
 ## Current development status
 
-The repository currently provides the typed Python package foundation, environment-based configuration, structured logging, and quality tooling. Data pipelines and infrastructure are not implemented yet.
+The repository currently provides the typed Python package foundation, local PostgreSQL and MinIO infrastructure, environment-based configuration, structured logging, connectivity checks, and quality tooling. Data pipelines are not implemented yet.
 
 ## Basic setup
 
@@ -19,6 +19,16 @@ cp .env.example .env
 
 The project uses safe local defaults, so copying the example environment file is optional for local development.
 
+Start the local services with `make infra-up` and verify them with `make infra-check`.
+
+| Service | Purpose | Local port |
+| --- | --- | --- |
+| PostgreSQL | Warehouse and operational metadata database (`k12hub`) | `5432` |
+| MinIO API | S3-compatible object storage | `9000` |
+| MinIO console | Local object-storage administration | `9001` |
+
+MinIO initializes the private `k12-raw`, `k12-standardized`, and `k12-quarantine` buckets. Ports and safe local-only credentials can be overridden in an uncommitted `.env` file.
+
 ## Available quality commands
 
 ```sh
@@ -27,6 +37,11 @@ make lint
 make typecheck
 make test
 make verify
+make infra-up
+make infra-check
+make infra-logs
+make infra-down
+make infra-reset
 ```
 
 ## Synthetic-data disclaimer

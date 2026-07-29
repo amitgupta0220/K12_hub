@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 1 — Python repository bootstrap.
+Prompt 2 — PostgreSQL and MinIO local infrastructure.
 
 ## Completed work
 
@@ -18,6 +18,13 @@ Prompt 1 — Python repository bootstrap.
 - Added unit tests for configuration, imports, and logging setup.
 - Added repository setup and quality commands, environment examples, ignore rules, and
   empty data-directory markers.
+- Added Docker Compose services for PostgreSQL 16 and MinIO with named volumes and health checks.
+- Added an idempotent one-time MinIO initializer for the `k12-raw`, `k12-standardized`, and
+  `k12-quarantine` buckets.
+- Added typed local PostgreSQL and MinIO configuration with safe, overridable defaults.
+- Added service connectivity checks and marked integration tests.
+- Added infrastructure lifecycle commands and an interactive warning before volume deletion.
+- Documented local services, ports, buckets, and the infrastructure architecture.
 
 ## Validation results
 
@@ -34,11 +41,23 @@ Prompt 1 — Python repository bootstrap.
 - Earlier Prompt 1 verification attempts stopped during restricted dependency installation and
   on formatting/lint findings; dependency access and all reported findings were corrected before
   the successful full gate.
+- `docker compose config` passed on 2026-07-29.
+- `make infra-up` passed with healthy PostgreSQL and MinIO services and successful bucket
+  initialization.
+- `make infra-check` passed the service probes and 2 marked integration tests.
+- `make verify` passed after all Prompt 2 changes.
+- Ruff formatting and lint checks passed for 9 files.
+- mypy passed with no issues in 9 source files.
+- pytest passed 19 unit tests with 2 integration tests deselected.
+- Unit-test coverage was 93%.
 
 ## Known issues
 
-- No known issues in the completed repository bootstrap.
+- The system Python 3.9 runtime uses LibreSSL 2.8.3, so urllib3 emits a compatibility warning.
+  Local MinIO uses HTTP and all connectivity checks pass; a newer Python/OpenSSL runtime will
+  remove the warning.
 
 ## Next recommended phase
 
-Provide the next numbered project prompt. No data pipelines or infrastructure have been started.
+Provide the next numbered project prompt. No Airflow, dbt, Streamlit, ingestion logic, or
+warehouse tables have been started.

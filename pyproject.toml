@@ -9,6 +9,8 @@ description = "A local-first K-12 data infrastructure portfolio project."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "minio>=7.2,<8.0",
+    "psycopg[binary]>=3.2,<4.0",
     "python-dotenv>=1.0,<2.0",
 ]
 
@@ -25,6 +27,9 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=k12hub --cov-report=term-missing"
+markers = [
+    "integration: requires running local infrastructure",
+]
 testpaths = ["tests"]
 
 [tool.coverage.run]
@@ -49,4 +54,4 @@ quote-style = "double"
 [tool.mypy]
 python_version = "3.9"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "scripts"]

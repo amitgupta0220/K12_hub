@@ -94,3 +94,32 @@ and an optional plain-text formatter.
 Configuration remains small, deterministic, and straightforward to test. Future settings must be
 added through the same validation boundary. The project avoids a larger settings framework for
 now, while retaining the option to adopt one if configuration complexity grows.
+
+---
+
+## ADR-0005: Run the initial persistence layer through Docker Compose
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+The project needs reproducible local PostgreSQL and S3-compatible storage without introducing
+cloud services or later platform components prematurely.
+
+### Decision
+
+Run PostgreSQL 16 and MinIO through Docker Compose with named volumes and health checks. Use safe
+local-only default credentials that can be overridden in an uncommitted `.env` file. Initialize
+three private, purpose-specific buckets through an idempotent one-time MinIO client service:
+`k12-raw`, `k12-standardized`, and `k12-quarantine`.
+
+Keep Docker-dependent tests marked as `integration`. Run them through `make infra-check`, while
+the default unit-test and verification paths remain usable without Docker.
+
+### Consequences
+
+Developers get persistent, locally reproducible services and explicit object-storage boundaries.
+Resetting infrastructure requires intentional volume deletion and loses local state. Later phases
+may build on these services but must not collapse raw, standardized, and quarantined objects into
+one bucket.
