@@ -1,0 +1,36 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+.venv/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Quality-tool artifacts
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+
+# Local and generated data
+data/*
+!data/.gitkeep
+!data/external/
+!data/generated/
+!data/fixtures/
+data/external/*
+!data/external/.gitkeep
+data/generated/*
+!data/generated/.gitkeep

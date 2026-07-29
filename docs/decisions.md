@@ -1,0 +1,96 @@
+# Architecture Decision Log
+
+This file is an append-only log of significant architectural decisions. New decisions receive the next sequential identifier. If a decision changes, add a new entry that supersedes the earlier one rather than silently rewriting history.
+
+## Entry format
+
+Each entry contains:
+
+- **Status:** Proposed, Accepted, Superseded, or Rejected
+- **Date:** `YYYY-MM-DD`
+- **Context:** The problem and relevant constraints
+- **Decision:** The selected approach
+- **Consequences:** Expected benefits, costs, risks, and follow-up work
+
+---
+
+## ADR-0001: Use the fixed local-first platform stack
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+The project is a portfolio demonstration of a K-12 data reliability platform that must run locally and show ingestion, storage, warehousing, transformation, orchestration, validation, reporting, and guarded natural-language querying.
+
+### Decision
+
+Use Python, Docker Compose, MinIO, PostgreSQL, dbt Core, Apache Airflow, Streamlit, Plotly, pytest, Ruff, mypy, and GitHub Actions. Data validation will use a Python rule engine and dbt tests. Natural-language questions will produce a validated structured query plan, optionally assisted by an LLM provider.
+
+### Consequences
+
+The architecture is reproducible on a local machine and demonstrates the intended data-platform layers. It also creates operational complexity from coordinating several services, so future phases must keep component responsibilities clear and add integration checks incrementally.
+
+---
+
+## ADR-0002: Separate synthetic and public data and prohibit real student data
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+K-12 records are privacy-sensitive. The project needs realistic demonstrations and stable tests without collecting or exposing real student information or depending on mutable live websites.
+
+### Decision
+
+Use only deterministic synthetic data and public aggregate datasets. Keep the two categories clearly labeled and separated across storage, ingestion, fixtures, metadata, and documentation. Do not commit generated raw data, student-level generated datasets, database volumes, secrets, or credentials.
+
+### Consequences
+
+The project can demonstrate data-quality and delivery patterns with a low privacy risk and reproducible tests. Public-source provenance and synthetic-data labeling become required design concerns in every future ingestion path.
+
+---
+
+## ADR-0003: Guard natural-language queries with structured plans
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+The platform must support English-language questions while preventing arbitrary or unsafe SQL execution.
+
+### Decision
+
+Convert questions into a structured query plan that is validated against allowlisted datasets, dimensions, metrics, filters, and limits. Application SQL must be read-only and parameterized. Never execute LLM output directly as SQL.
+
+### Consequences
+
+Chat functionality is constrained to supported analytical questions and is easier to audit and test. Adding a new query capability requires an explicit schema and validation update rather than unconstrained SQL generation.
+
+---
+
+## ADR-0004: Use lightweight typed environment configuration and standard-library logging
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+The Python foundation needs environment-based configuration, test support, clear failures for
+missing production-style values, and structured logging without introducing infrastructure or
+business logic.
+
+### Decision
+
+Use `python-dotenv` to load optional local environment files into a typed, validated settings
+dataclass. Provide safe local and test data-directory defaults, but require an explicit data
+directory in production mode. Use Python's standard logging configuration with a JSON formatter
+and an optional plain-text formatter.
+
+### Consequences
+
+Configuration remains small, deterministic, and straightforward to test. Future settings must be
+added through the same validation boundary. The project avoids a larger settings framework for
+now, while retaining the option to adopt one if configuration complexity grows.
