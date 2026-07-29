@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 2 — PostgreSQL and MinIO local infrastructure.
+Prompt 3 — operational metadata and warehouse schema initialization.
 
 ## Completed work
 
@@ -25,6 +25,13 @@ Prompt 2 — PostgreSQL and MinIO local infrastructure.
 - Added service connectivity checks and marked integration tests.
 - Added infrastructure lifecycle commands and an interactive warning before volume deletion.
 - Documented local services, ports, buckets, and the infrastructure architecture.
+- Added Alembic initialization and a transactional operational-schema migration.
+- Created the `metadata`, `raw`, `staging`, `core`, `mart`, `audit`, and `quarantine` schemas.
+- Added three metadata tables, four audit tables, and one quarantine table with UUID keys,
+  constraints, timestamps, relationships, and audit lookup indexes.
+- Kept `raw`, `staging`, `core`, and `mart` empty for future dbt-managed analytical models.
+- Added SQLAlchemy database URL, engine, and transaction utilities.
+- Added migration lifecycle commands and unit and integration coverage.
 
 ## Validation results
 
@@ -50,6 +57,15 @@ Prompt 2 — PostgreSQL and MinIO local infrastructure.
 - mypy passed with no issues in 9 source files.
 - pytest passed 19 unit tests with 2 integration tests deselected.
 - Unit-test coverage was 93%.
+- `make db-upgrade` passed and applied Alembic revision `20260729_0001`.
+- `make migration-test` passed 2 migration integration tests.
+- A uniquely named clean database successfully ran the full migration twice without
+  duplicate-object failures; all required schemas, tables, columns, and indexes were verified.
+- `make verify` passed after all Prompt 3 changes.
+- Ruff formatting and lint checks passed for 14 files.
+- mypy passed with no issues in 12 source files.
+- pytest passed 23 unit tests with 4 integration tests deselected.
+- Unit-test coverage remained 93%.
 
 ## Known issues
 
@@ -59,5 +75,5 @@ Prompt 2 — PostgreSQL and MinIO local infrastructure.
 
 ## Next recommended phase
 
-Provide the next numbered project prompt. No Airflow, dbt, Streamlit, ingestion logic, or
-warehouse tables have been started.
+Provide the next numbered project prompt. No Airflow, dbt models, Streamlit, ingestion logic,
+student tables, attendance tables, or analytical tables have been started.

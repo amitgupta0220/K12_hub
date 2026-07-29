@@ -2,7 +2,7 @@ VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 
-.PHONY: install format lint typecheck test integration-test verify infra-up infra-down infra-reset infra-logs infra-check
+.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current
 
 install:
 	python3 -m venv $(VENV)
@@ -10,12 +10,12 @@ install:
 	$(PIP) install -e ".[dev]"
 
 format: install
-	$(PYTHON) -m ruff format src tests scripts
-	$(PYTHON) -m ruff check --fix src tests scripts
+	$(PYTHON) -m ruff format src tests scripts migrations
+	$(PYTHON) -m ruff check --fix src tests scripts migrations
 
 lint: install
-	$(PYTHON) -m ruff format --check src tests scripts
-	$(PYTHON) -m ruff check src tests scripts
+	$(PYTHON) -m ruff format --check src tests scripts migrations
+	$(PYTHON) -m ruff check src tests scripts migrations
 
 typecheck: install
 	$(PYTHON) -m mypy
@@ -25,6 +25,9 @@ test: install
 
 integration-test: install
 	$(PYTHON) -m pytest -m integration
+
+migration-test: install
+	$(PYTHON) -m pytest -m migration
 
 verify: lint typecheck test
 
@@ -47,3 +50,12 @@ infra-logs:
 infra-check: install
 	$(PYTHON) scripts/check_services.py
 	$(PYTHON) -m pytest -m integration
+
+db-upgrade: install
+	$(PYTHON) -m alembic upgrade head
+
+db-downgrade: install
+	$(PYTHON) -m alembic downgrade -1
+
+db-current: install
+	$(PYTHON) -m alembic current

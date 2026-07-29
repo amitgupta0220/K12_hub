@@ -123,3 +123,33 @@ Developers get persistent, locally reproducible services and explicit object-sto
 Resetting infrastructure requires intentional volume deletion and loses local state. Later phases
 may build on these services but must not collapse raw, standardized, and quarantined objects into
 one bucket.
+
+---
+
+## ADR-0006: Separate operational migrations from analytical transformations
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+PostgreSQL must hold durable operational metadata, audit history, and quarantined records while
+also serving as the future analytical warehouse. Operational tables and analytical models have
+different lifecycles and ownership.
+
+### Decision
+
+Use Alembic for the `metadata`, `audit`, and `quarantine` operational tables. Create the `raw`,
+`staging`, `core`, and `mart` schema namespaces now but leave them empty for dbt to manage in a
+later phase. Use PostgreSQL UUID primary keys, JSONB for structured contracts, rules, and rejected
+payloads, and explicit indexes for common audit lookups.
+
+Run each migration transactionally. Prove repeatability by applying the complete migration twice
+to a uniquely named clean test database during the migration integration suite.
+
+### Consequences
+
+Operational state can evolve independently from warehouse transformations, and migration failures
+roll back atomically. Empty analytical schemas make the future ownership boundary visible without
+prematurely creating models. Integration tests require permission to create and remove a temporary
+local PostgreSQL database.

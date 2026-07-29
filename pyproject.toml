@@ -9,9 +9,11 @@ description = "A local-first K-12 data infrastructure portfolio project."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "alembic>=1.14,<2.0",
     "minio>=7.2,<8.0",
     "psycopg[binary]>=3.2,<4.0",
     "python-dotenv>=1.0,<2.0",
+    "sqlalchemy>=2.0,<3.0",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +31,7 @@ where = ["src"]
 addopts = "--cov=k12hub --cov-report=term-missing"
 markers = [
     "integration: requires running local infrastructure",
+    "migration: creates a temporary PostgreSQL database and runs Alembic migrations",
 ]
 testpaths = ["tests"]
 
