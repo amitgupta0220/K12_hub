@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 5 — deterministic synthetic-data generator.
+Prompt 7 — parse files and load staging tables.
 
 ## Completed work
 
@@ -52,6 +52,37 @@ Prompt 5 — deterministic synthetic-data generator.
   consistency, every requested injected error, manifest integrity, metric calculations, and CLI
   operation.
 - Aligned contract file patterns and district relationships with the generated file set.
+- Added configuration-driven discovery of generated source files using registered, enabled source
+  contracts.
+- Added manifest validation for synthetic-data labeling and school-year routing.
+- Added streaming SHA-256 calculation and source-system/checksum duplicate detection.
+- Added idempotent raw-file ingestion that preserves unchanged source bytes in the MinIO
+  `k12-raw` bucket.
+- Added versioned raw object paths containing source system, school year, ingestion date, pipeline
+  run identifier, and original filename.
+- Added transactional PostgreSQL pipeline-run and source-file audit updates, including per-file
+  failure recording without rolling back successful uploads from the same run.
+- Added a checksum/status lookup index for duplicate detection.
+- Added the `python -m k12hub.cli ingest` command and a reproducible `make ingest-demo` workflow.
+- Added unit and integration coverage for discovery, checksums, duplicate skipping, changed-file
+  versioning, upload failures, PostgreSQL audit metadata, and MinIO objects.
+- Documented the raw-ingestion boundary, object layout, idempotency decision, and local usage.
+- Added Alembic-managed `staging.sis_student`, `staging.sis_enrollment`,
+  `staging.attendance_event`, and `staging.assessment_event` tables with typed business columns and
+  common source-lineage metadata.
+- Added MinIO object reads and contract-driven CSV, JSON Lines, and XLSX parsers.
+- Added predictable lower-snake-case column normalization, required-column validation, typed field
+  parsing, accepted-value checks, and original-row JSONB preservation.
+- Added row-level parse quarantine with retry-safe uniqueness.
+- Added batch staging inserts and atomic per-source-file transactions.
+- Added discovered, parsed, loaded, and rejected counts to row-count reconciliation.
+- Added source-file row locking and `(source_file_id, source_row_number)` idempotency so retries
+  cannot create full or partial duplicate loads.
+- Added `load-staging` and combined `run-ingestion` CLI commands; the combined command delegates to
+  the existing raw-ingestion and staging services.
+- Added unit and integration coverage for all formats, malformed records, missing columns,
+  normalization, MinIO-only reads, idempotent retry, reconciliation, and transaction rollback.
+- Documented staging usage, ownership, flow, atomicity, and retry behavior.
 
 ## Validation results
 
@@ -113,6 +144,36 @@ Prompt 5 — deterministic synthetic-data generator.
 - The full-size gate exposed variable XLSX modification metadata that two fast small runs had
   masked. The writer now normalizes both archive and workbook metadata, a regression assertion
   verifies the fixed timestamps, and the full-size determinism gate passes.
+- `make verify` passed after all Prompt 6 changes.
+- Ruff formatting check passed for 26 files, and Ruff lint passed with no findings.
+- mypy passed with no issues in 23 source files.
+- pytest passed 44 unit tests with 5 integration tests deselected; unit-test coverage was 87%.
+- PostgreSQL and MinIO were healthy during Prompt 6 integration validation.
+- Alembic revision `20260729_0002` applied successfully.
+- The Prompt 6 MinIO/PostgreSQL ingestion test passed, confirming that a second ingestion skips all
+  four exact duplicates without creating additional source-file audit rows.
+- The complete integration suite passed all 5 tests.
+- Alembic revision `20260729_0003` applied successfully.
+- `make verify` passed after all Prompt 7 implementation and test changes.
+- Ruff formatting and lint checks passed for 30 files.
+- mypy passed with no issues in 26 source files.
+- pytest passed 49 unit tests with 8 integration tests deselected; total unit-test coverage was
+  81%.
+- The complete integration suite passed all 8 tests.
+- The 100-row malformed-record gate passed with 100 discovered, 97 parsed, 97 loaded, and 3
+  quarantined rows.
+- Idempotent retry preserved exactly one staging row per source file and source row number and one
+  reconciliation per source file and stage.
+- A forced failure after staging and quarantine inserts rolled back all row, reconciliation, and
+  source-file count changes.
+- The full 1,500-student demo loaded from MinIO into staging with manifest-matching counts: 1,500
+  students, 1,500 enrollments, 266,981 attendance events, and 3,000 assessment events.
+- All four full-demo reconciliations were matched: 272,981 discovered, parsed, and loaded rows with
+  zero rejected rows.
+- The first Prompt 7 migration attempt exposed schema-wide PostgreSQL index-name collisions; table
+  names were added to retry-key constraint names before the successful migration gate.
+- The first full-demo invocation used an incorrect generated run-directory suffix and produced an
+  audited failure with no loaded files; rerunning with the exact generated path passed.
 
 ## Known issues
 
@@ -122,6 +183,6 @@ Prompt 5 — deterministic synthetic-data generator.
 
 ## Next recommended phase
 
-Provide the next numbered project prompt. No generated student-level data is tracked in version
-control. No Airflow, dbt models, Streamlit, ingestion logic, student warehouse tables, attendance
-warehouse tables, or analytical models have been started.
+Provide Prompt 8. No generated student-level data is tracked in version control. No Airflow, dbt
+models, Streamlit, conformed student warehouse tables, conformed attendance warehouse tables, or
+analytical models have been started.

@@ -9,8 +9,9 @@ K-12 Data Reliability Hub is an OAISD-inspired, local-first portfolio project de
 The repository currently provides the typed Python package foundation, local PostgreSQL and MinIO
 infrastructure, Alembic-managed operational metadata schemas, environment-based configuration,
 strict configuration-driven source contracts, deterministic synthetic-data generation, structured
-logging, connectivity checks, and quality tooling. Data pipelines and analytical models are not
-implemented yet.
+logging, idempotent raw-file ingestion into MinIO with PostgreSQL audit metadata, connectivity
+checks, contract-driven CSV/JSON Lines/XLSX parsing, transactional staging loads, row quarantine
+and reconciliation, and quality tooling. Analytical models are not implemented yet.
 
 ## Basic setup
 
@@ -35,6 +36,33 @@ python -m k12hub.cli generate-data --seed 2026 --students 1500 --school-year 202
 Generated runs are written beneath `data/generated/`, are excluded from version control, and
 include a manifest with record counts and SHA-256 checksums. Use `--help` to see error-injection
 and output-directory options.
+
+After starting the services and applying migrations, ingest one generated run with:
+
+```sh
+python -m k12hub.cli ingest --input-dir data/generated/<run-id> --source all
+```
+
+Ingestion reads the generated manifest for the school year, uploads only contract-matched source
+files to `k12-raw`, and records pipeline and file audit metadata. Exact checksums already marked
+loaded are skipped; changed content with the same filename is retained as a new raw version.
+
+Load the raw objects for that pipeline run into staging with:
+
+```sh
+python -m k12hub.cli load-staging --pipeline-run-id <id>
+```
+
+For a new generated run, both steps can be invoked without duplicating service logic:
+
+```sh
+python -m k12hub.cli run-ingestion --input-dir data/generated/<run-id>
+```
+
+Staging always reads the immutable MinIO objects. It validates normalized columns against the
+source contracts, preserves every original row in JSONB, loads valid rows into the four typed
+staging tables, quarantines malformed rows, and writes discovered/parsed/loaded/rejected
+reconciliation counts. Retrying `load-staging` with the same pipeline run is idempotent.
 
 | Service | Purpose | Local port |
 | --- | --- | --- |
@@ -61,8 +89,12 @@ make db-upgrade
 make db-current
 make db-downgrade
 make migration-test
+make ingest-demo
 python -m k12hub.cli validate-config
 python -m k12hub.cli generate-data --help
+python -m k12hub.cli ingest --help
+python -m k12hub.cli load-staging --help
+python -m k12hub.cli run-ingestion --help
 ```
 
 ## Synthetic-data disclaimer

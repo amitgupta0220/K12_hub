@@ -217,3 +217,69 @@ Tests can compare exact checksums and later pipeline phases can distinguish trus
 metrics from intentionally corrupt inputs. A changed seed or generation argument produces a
 different run. Generated student-level files remain local and uncommitted; only generator code,
 contracts, and deterministic tests are versioned.
+
+---
+
+## ADR-0009: Use checksums as the raw-ingestion idempotency key
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Raw ingestion must preserve changed files as new versions while safely skipping exact duplicates
+across pipeline runs. Each new run has a distinct object prefix, so object paths cannot determine
+whether content was loaded previously. Successful-file metadata must survive if another file in
+the same run fails.
+
+### Decision
+
+Treat the pair of configured source system and SHA-256 checksum as the duplicate-detection key.
+Check only prior `loaded` audit records, so a failed upload can be retried. Create a pipeline audit
+record before discovery and use separate database transactions for source registration, file
+discovery metadata, status changes, and final run counts.
+
+Upload unchanged source bytes to `k12-raw` under a versioned path containing source system, school
+year, ingestion date, pipeline run UUID, and original filename. Use the generated manifest for
+school-year routing and synthetic-data labeling, but do not parse source-file contents.
+
+### Consequences
+
+Repeated directories do not create duplicate objects or `audit.source_file` rows. Changed content
+with the same name is retained as a new raw version. Per-file transactions preserve successful
+metadata and mark upload failures, although object storage and PostgreSQL do not share a distributed
+transaction; later recovery tooling may need to reconcile objects if a process stops between
+upload and the final metadata update.
+
+---
+
+## ADR-0010: Load each immutable source file in one retry-safe staging transaction
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+CSV, JSON Lines, and XLSX sources need a consistent path from immutable raw objects into typed
+source-aligned tables. Malformed rows must remain auditable, counts must reconcile, and a retry
+must not create duplicates or preserve only part of a file load.
+
+### Decision
+
+Read source bytes only through the MinIO client and use validated contracts to select an
+allowlisted parser, business-column set, and staging destination. Normalize source headers to lower
+snake case, preserve the original source row as JSONB, and type-convert contract fields before
+loading.
+
+Use `(source_file_id, source_row_number)` as the staging idempotency key. Give parse-error
+quarantine rows and file/stage reconciliations equivalent uniqueness keys. For each source file,
+lock its audit row and batch-insert staging and quarantine rows, calculate persisted counts, upsert
+reconciliation, and update the source row count in one PostgreSQL transaction.
+
+### Consequences
+
+Exact retries converge on one staging or quarantine record per source row, and failures before
+commit roll back every effect of that file attempt. File structure failures stop before database
+writes. Memory usage is proportional to one raw object because parsing completes before its
+transaction begins; future very large sources may require a streaming parser with the same
+transaction and idempotency boundary.

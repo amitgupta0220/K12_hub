@@ -24,8 +24,14 @@ EXPECTED_TABLES = {
         "access_event",
     },
     "quarantine": {"rejected_record"},
+    "staging": {
+        "sis_student",
+        "sis_enrollment",
+        "attendance_event",
+        "assessment_event",
+    },
 }
-EXPECTED_EMPTY_SCHEMAS = {"raw", "staging", "core", "mart"}
+EXPECTED_EMPTY_SCHEMAS = {"raw", "core", "mart"}
 
 
 def _alembic_config() -> Config:
@@ -94,6 +100,34 @@ def _assert_expected_database_objects(settings: PostgresSettings) -> None:
             "detected_at",
             "resolution_status",
         } <= rejected_columns
+
+        reconciliation_columns = {
+            column["name"]
+            for column in inspector.get_columns(
+                "row_count_reconciliation",
+                schema="audit",
+            )
+        }
+        assert {
+            "discovered_row_count",
+            "parsed_row_count",
+            "loaded_row_count",
+            "rejected_row_count",
+        } <= reconciliation_columns
+
+        required_staging_columns = {
+            "pipeline_run_id",
+            "source_file_id",
+            "source_row_number",
+            "source_schema_version",
+            "ingested_at",
+            "raw_payload",
+        }
+        for table_name in EXPECTED_TABLES["staging"]:
+            staging_columns = {
+                column["name"] for column in inspector.get_columns(table_name, schema="staging")
+            }
+            assert required_staging_columns <= staging_columns
 
         assert inspector.get_indexes("pipeline_run", schema="audit")
         assert inspector.get_indexes("source_file", schema="audit")

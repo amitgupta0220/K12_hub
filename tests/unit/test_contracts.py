@@ -39,7 +39,7 @@ def test_contract_defines_required_privacy_metadata() -> None:
 
     assert contract.expected_grain == "one row per student"
     assert contract.natural_key == ["student_id"]
-    assert contract.destination_staging_table == "staging.sis_students"
+    assert contract.destination_staging_table == "staging.sis_student"
     assert (
         fields["student_id"].sensitive_classification is SensitiveClassification.DIRECT_IDENTIFIER
     )

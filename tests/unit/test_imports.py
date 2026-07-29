@@ -30,6 +30,25 @@ def test_json_formatter_emits_structured_record() -> None:
     assert payload["timestamp"].endswith("+00:00")
 
 
+def test_json_formatter_includes_ingestion_context() -> None:
+    record = logging.LogRecord(
+        name="k12hub.ingestion",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="file uploaded",
+        args=(),
+        exc_info=None,
+    )
+    record.pipeline_run_id = "00000000-0000-0000-0000-000000000001"
+    record.source_filename = "students.csv"
+
+    payload = json.loads(JsonFormatter().format(record))
+
+    assert payload["pipeline_run_id"] == "00000000-0000-0000-0000-000000000001"
+    assert payload["source_filename"] == "students.csv"
+
+
 def test_configure_logging_supports_plain_output() -> None:
     configure_logging(
         Settings(

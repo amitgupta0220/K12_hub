@@ -68,4 +68,4 @@ natural_key:
   - student_id
 expected_grain: one row per student
 schema_version: "1.0.0"
-destination_staging_table: staging.sis_students
+destination_staging_table: staging.sis_student

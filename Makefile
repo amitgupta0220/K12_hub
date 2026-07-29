@@ -2,7 +2,7 @@ VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 
-.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current
+.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current ingest-demo
 
 install:
 	python3 -m venv $(VENV)
@@ -59,3 +59,7 @@ db-downgrade: install
 
 db-current: install
 	$(PYTHON) -m alembic current
+
+ingest-demo: install
+	$(PYTHON) -m k12hub.cli generate-data --seed 2026 --students 25 --school-year 2025-2026 --output-directory data/generated/ingest-demo
+	$(PYTHON) -m k12hub.cli ingest --input-dir data/generated/ingest-demo/run-f57b686f98cfdb28 --source all

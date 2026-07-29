@@ -24,6 +24,17 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
+        for field_name in (
+            "pipeline_run_id",
+            "source_system",
+            "source_filename",
+            "discovered",
+            "uploaded",
+            "skipped",
+            "failed",
+        ):
+            if hasattr(record, field_name):
+                payload[field_name] = getattr(record, field_name)
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, sort_keys=True)

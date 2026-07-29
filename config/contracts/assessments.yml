@@ -60,4 +60,4 @@ natural_key:
   - assessment_event_id
 expected_grain: one row per student assessment event
 schema_version: "1.0.0"
-destination_staging_table: staging.assessments
+destination_staging_table: staging.assessment_event

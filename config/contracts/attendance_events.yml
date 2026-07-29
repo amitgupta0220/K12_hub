@@ -54,4 +54,4 @@ natural_key:
   - instructional_date
 expected_grain: one row per student per instructional day
 schema_version: "1.0.0"
-destination_staging_table: staging.attendance_events
+destination_staging_table: staging.attendance_event
