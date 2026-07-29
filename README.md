@@ -12,8 +12,8 @@ strict configuration-driven source contracts, deterministic synthetic-data gener
 logging, idempotent raw-file ingestion into MinIO with PostgreSQL audit metadata, connectivity
 checks, contract-driven CSV/JSON Lines/XLSX parsing, transactional staging loads, row quarantine
 and reconciliation, a configuration-driven data-quality rule engine with dashboard-ready audit
-results, trusted dbt core dimensions and facts, and quality tooling. Downstream marts are not
-implemented yet.
+results, trusted dbt core dimensions and facts, governed analytical marts, and quality tooling.
+Streamlit delivery is not implemented yet.
 
 ## Basic setup
 
@@ -84,6 +84,8 @@ make dbt-build
 ```
 
 See `docs/data_model.md` for model grains, privacy boundaries, lineage, and relationships.
+See `docs/metric_catalog.md` for governed metric formulas, grains, dimensions, refresh
+expectations, and privacy classifications.
 
 | Service | Purpose | Local port |
 | --- | --- | --- |

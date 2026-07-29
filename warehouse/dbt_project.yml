@@ -21,3 +21,11 @@ models:
         +tags: ["core", "dimension"]
       facts:
         +tags: ["core", "fact"]
+    marts:
+      +schema: mart
+      +materialized: table
+      +tags: ["mart"]
+
+vars:
+  chronic_absence_threshold: 0.10
+  source_freshness_sla_hours: 24

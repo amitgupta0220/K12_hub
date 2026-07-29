@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 9 — dbt trusted core models.
+Prompt 10 — governed analytical marts and metric contracts.
 
 ## Completed work
 
@@ -110,6 +110,16 @@ Prompt 9 — dbt trusted core models.
   absence, generator expected metrics, and the no-orphan student/school gate.
 - Added dbt Make commands, aggregate metric-variable validation, and the trusted-core entity model
   documentation.
+- Expanded the metric registry to require descriptions, formulas, grains, allowed dimensions,
+  source marts, refresh expectations, and privacy classifications for all governed metrics.
+- Added attendance summary, chronic absenteeism, enrollment trends, data-quality scorecard,
+  pipeline health, and reporting readiness marts under the `mart` schema.
+- Added configurable chronic-absence and source-freshness thresholds, shared safe division, null
+  semantics for missing evidence, valid aggregate dimensions, and freshness timestamps.
+- Added dbt tests for mart grains, required values, metric ranges, synthetic expected metrics, and
+  exact/tolerance-aware attendance and enrollment gates.
+- Added a deterministic metric-catalog renderer and a unit test keeping
+  `docs/metric_catalog.md` synchronized with `config/metrics.yml`.
 
 ## Validation results
 
@@ -227,6 +237,28 @@ Prompt 9 — dbt trusted core models.
   direct student identifier columns in the student dimension and core facts.
 - `make dbt-docs` generated the dbt catalog successfully after receiving the same validated
   aggregate expected-metrics variables used by the build.
+- The first Prompt 10 dbt build used a different validation salt and correctly failed core
+  relationships; a one-time full refresh restored the original stable token domain before the
+  required normal build was rerun.
+- `make dbt-build` passed all 151 nodes: 3 incremental core facts, 12 table models, and 136 data
+  tests.
+- Synthetic mart validation matched 25 enrolled students and 180 instructional days exactly;
+  attendance rate `0.9392756047` matched expected `0.939276` within `0.000001`, and chronic
+  absenteeism matched 5 of 25 students (`0.20`).
+- The validated pipeline produced 4,357 possible attendance days, zero blocking failures, four
+  warnings, data-quality pass rate `0.944444`, and reporting readiness score `97.78`.
+- Pipeline runs without quality or source evidence retained null reporting-readiness and freshness
+  values rather than misleading zeroes.
+- The first Prompt 10 `make verify` attempt stopped on import ordering in the metric-catalog test;
+  the import was corrected before rerunning the complete gate.
+- `make verify` passed Ruff formatting and lint for 39 files, mypy for 34 source files, and 71 unit
+  tests with 11 integration tests deselected; unit-test coverage was 81%.
+- Created the ignored `data/external/mi_school_data/` and `data/external/nces/` directories for
+  pre-Prompt 11 source review.
+- Downloaded the original Michigan Bulletin 1014 and NCES 2023-24 summary Excel workbooks without
+  changing their worksheets or columns. Both workbooks passed archive integrity checks.
+- Recorded publisher URLs, retrieval date, byte sizes, SHA-256 checksums, public-aggregate
+  classification, and pending licensing/file-size review in `docs/public_data_sources.md`.
 - The first Prompt 9 `make verify` attempt stopped on formatting, then import ordering, then a
   missing Python package marker; each finding was corrected before the complete gate passed.
 - `make verify` passed Ruff formatting and lint for 37 files, mypy for 32 source files, and 70 unit
@@ -240,5 +272,6 @@ Prompt 9 — dbt trusted core models.
 
 ## Next recommended phase
 
-Provide the next numbered prompt. No generated student-level data is tracked in version control.
-No Airflow, Streamlit, downstream marts, or aggregate dashboard models have been started.
+Review the downloaded public aggregate datasets and their licensing/file-size implications before
+Prompt 11 ingestion work. No generated student-level data is tracked in version control. No
+Airflow or Streamlit application has been started.

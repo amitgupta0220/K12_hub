@@ -1,14 +1,130 @@
-schema_version: "1.0.0"
+schema_version: "2.0.0"
 metrics:
-  - name: student_count
-    description: Distinct students represented in an approved aggregate result.
-  - name: enrollment_count
-    description: Enrollment periods represented in an approved aggregate result.
+  - name: enrolled_student_count
+    description: Distinct trusted student tokens represented in the reporting grain.
+    formula: COUNT(DISTINCT student_key)
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_enrollment_trends
+    refresh_expectation: After each successful validated pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
+  - name: possible_attendance_days
+    description: Count of trusted daily attendance opportunities represented in the grain.
+    formula: COUNT(daily_attendance_key)
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_attendance_summary
+    refresh_expectation: After each successful validated attendance pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
+  - name: attended_days
+    description: Attendance minutes expressed as equivalent full instructional days.
+    formula: SUM(minutes_attended) / 420
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_attendance_summary
+    refresh_expectation: After each successful validated attendance pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
   - name: attendance_rate
-    description: Aggregate share of scheduled instructional time attended.
-  - name: chronic_absence_rate
-    description: Aggregate share of students meeting the configured chronic-absence definition.
+    description: Share of possible instructional minutes attended.
+    formula: SUM(minutes_attended) / NULLIF(SUM(possible_minutes), 0)
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_attendance_summary
+    refresh_expectation: After each successful validated attendance pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
+  - name: chronically_absent_student_count
+    description: Students at or above the configured absence-rate threshold.
+    formula: COUNT(student_key) FILTER (WHERE absence_rate >= chronic_absence_threshold)
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_chronic_absenteeism
+    refresh_expectation: After each successful validated attendance pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
+  - name: chronic_absenteeism_rate
+    description: Share of students with measurable attendance at or above the configured threshold.
+    formula: chronically_absent_student_count / NULLIF(enrolled_student_count, 0)
+    grain: school year, district, school, and grade
+    allowed_dimensions: [school_year, district_key, school_key, grade_level]
+    source_model: mart.mart_chronic_absenteeism
+    refresh_expectation: After each successful validated attendance pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
+  - name: records_processed
+    description: Rows loaded by a pipeline run across its source files.
+    formula: audit.pipeline_run.records_loaded when at least one source file was discovered
+    grain: pipeline run
+    allowed_dimensions: [pipeline_name, pipeline_status]
+    source_model: mart.mart_pipeline_health
+    refresh_expectation: After every pipeline completion.
+    privacy_classification: internal
+  - name: records_rejected
+    description: Rows rejected by contract or staging validation for a pipeline run.
+    formula: audit.pipeline_run.records_rejected when at least one source file was discovered
+    grain: pipeline run
+    allowed_dimensions: [pipeline_name, pipeline_status]
+    source_model: mart.mart_pipeline_health
+    refresh_expectation: After every pipeline completion.
+    privacy_classification: internal
+  - name: blocking_error_count
+    description: Blocking quality failures recorded by the latest quality run.
+    formula: audit.data_quality_rule_run.blocking_failure_count
+    grain: pipeline run and latest data-quality run
+    allowed_dimensions: [pipeline_name, quality_status]
+    source_model: mart.mart_data_quality_scorecard
+    refresh_expectation: After every data-quality validation.
+    privacy_classification: internal
+  - name: warning_count
+    description: Warning-severity failures recorded by the latest quality run.
+    formula: SUM(rule failure_count) FILTER (WHERE severity = warning)
+    grain: pipeline run and latest data-quality run
+    allowed_dimensions: [pipeline_name, quality_status]
+    source_model: mart.mart_data_quality_scorecard
+    refresh_expectation: After every data-quality validation.
+    privacy_classification: internal
+  - name: data_quality_pass_rate
+    description: Share of enabled rules that passed in the latest quality run.
+    formula: passed_rule_count / NULLIF(enabled_rule_count, 0)
+    grain: pipeline run and latest data-quality run
+    allowed_dimensions: [pipeline_name, quality_status]
+    source_model: mart.mart_data_quality_scorecard
+    refresh_expectation: After every data-quality validation.
+    privacy_classification: internal
+  - name: pipeline_success_rate
+    description: Binary run-level success indicator, aggregatable across pipeline runs.
+    formula: 1 when pipeline_status = completed, otherwise 0
+    grain: pipeline run
+    allowed_dimensions: [pipeline_name, pipeline_status]
+    source_model: mart.mart_pipeline_health
+    refresh_expectation: After every pipeline completion.
+    privacy_classification: internal
+  - name: source_freshness_hours
+    description: Hours since the most recently loaded source file for the pipeline run.
+    formula: EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MAX(source_file.loaded_at))) / 3600
+    grain: pipeline run
+    allowed_dimensions: [pipeline_name, pipeline_status]
+    source_model: mart.mart_pipeline_health
+    refresh_expectation: Recomputed on every dbt build.
+    privacy_classification: internal
+  - name: reporting_readiness_score
+    description: Weighted score combining pipeline success, quality pass rate, and freshness.
+    formula: 100 * (0.4 * pipeline_success_rate + 0.4 * data_quality_pass_rate + 0.2 * freshness_sla_pass)
+    grain: pipeline run
+    allowed_dimensions: [pipeline_name, pipeline_status, quality_status]
+    source_model: mart.mart_reporting_readiness
+    refresh_expectation: Recomputed on every dbt build after quality validation.
+    privacy_classification: internal
   - name: assessment_event_count
-    description: Student assessment events represented in an approved aggregate result.
+    description: Trusted assessment events represented in the approved aggregate result.
+    formula: COUNT(assessment_key)
+    grain: school year
+    allowed_dimensions: [school_year]
+    source_model: mart.mart_reporting_readiness
+    refresh_expectation: After each successful validated assessment pipeline and dbt build.
+    privacy_classification: sensitive_aggregate
   - name: assessment_proficiency_rate
-    description: Aggregate share of assessment events meeting or exceeding the approved standard.
+    description: Share of trusted assessment events meeting or exceeding the approved standard.
+    formula: COUNT(*) FILTER (WHERE is_proficient) / NULLIF(COUNT(*), 0)
+    grain: school year
+    allowed_dimensions: [school_year]
+    source_model: mart.mart_reporting_readiness
+    refresh_expectation: After each successful validated assessment pipeline and dbt build.
+    privacy_classification: sensitive_aggregate

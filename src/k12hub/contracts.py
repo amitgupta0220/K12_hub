@@ -224,14 +224,22 @@ class PrivacyConfig(StrictModel):
 
 
 class MetricDefinition(StrictModel):
-    """A metric name and description without calculation logic."""
+    """One governed analytical metric contract."""
 
     name: StrictStr
     description: StrictStr
+    formula: StrictStr
+    grain: StrictStr
+    allowed_dimensions: list[StrictStr]
+    source_model: StrictStr = Field(pattern=r"^mart\.[a-z][a-z0-9_]*$")
+    refresh_expectation: StrictStr
+    privacy_classification: StrictStr = Field(
+        pattern=r"^(public|internal|sensitive_aggregate|restricted)$"
+    )
 
 
 class MetricsConfig(StrictModel):
-    """Registered metric names and descriptions."""
+    """Registered governed metric definitions."""
 
     schema_version: StrictStr
     metrics: list[MetricDefinition]

@@ -349,3 +349,36 @@ Trusted core facts are idempotent across reruns and cannot contain orphan studen
 without failing the dbt build. Changing the salt requires a coordinated full refresh because all
 tokenized keys change. Only passed pipeline versions enter core; corrections must be re-ingested
 and revalidated before dbt can select them.
+
+---
+
+## ADR-0013: Govern mart metrics in configuration and preserve missing evidence as null
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Attendance, enrollment, data-quality, pipeline-health, and reporting-readiness results need stable
+definitions before a dashboard is introduced. Operational runs may legitimately lack source files,
+quality validation, or assessment data, so substituting zero would incorrectly describe missing
+evidence as measured performance.
+
+### Decision
+
+Define each governed metric in `config/metrics.yml` with its formula, grain, allowed dimensions,
+source mart, refresh expectation, and privacy classification. Generate the checked-in metric
+catalog from this validated configuration and fail unit tests when it drifts.
+
+Use a shared safe-division macro that returns null when a denominator is missing or zero. Preserve
+null operational metrics and readiness scores when their required evidence is absent. Configure
+the chronic-absence threshold and freshness SLA as dbt variables. Compare synthetic attendance
+and chronic-absence rates with an absolute tolerance of `0.000001`; require exact count and
+instructional-day matches.
+
+### Consequences
+
+Metric consumers have one reviewable contract and can distinguish zero from unavailable data.
+Changing a formula, threshold, grain, dimension, or privacy classification requires coordinated
+configuration, catalog, model, and test updates. Reporting readiness remains intentionally null
+until pipeline, quality, and freshness evidence are all available.

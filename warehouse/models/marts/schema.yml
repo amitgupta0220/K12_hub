@@ -1,0 +1,143 @@
+version: 2
+
+models:
+  - name: mart_attendance_summary
+    description: >
+      Grain: one school year, district key, school key, and grade level represented by trusted
+      daily attendance.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [school_year, district_key, school_key, grade_level]
+    columns:
+      - name: school_year
+        data_tests: [not_null]
+      - name: district_key
+        data_tests: [not_null]
+      - name: school_key
+        data_tests: [not_null]
+      - name: grade_level
+        data_tests: [not_null]
+      - name: enrolled_student_count
+        data_tests: [not_null]
+      - name: possible_attendance_days
+        data_tests: [not_null]
+      - name: attended_days
+        data_tests: [not_null]
+      - name: attendance_rate
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: source_data_updated_at
+        data_tests: [not_null]
+
+  - name: mart_chronic_absenteeism
+    description: >
+      Grain: one school year, district key, school key, and grade level represented by students
+      with measurable trusted attendance.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [school_year, district_key, school_key, grade_level]
+    columns:
+      - name: school_year
+        data_tests: [not_null]
+      - name: district_key
+        data_tests: [not_null]
+      - name: school_key
+        data_tests: [not_null]
+      - name: grade_level
+        data_tests: [not_null]
+      - name: enrolled_student_count
+        data_tests: [not_null]
+      - name: chronically_absent_student_count
+        data_tests: [not_null]
+      - name: chronic_absenteeism_rate
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: chronic_absence_threshold
+        data_tests:
+          - not_null
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+
+  - name: mart_enrollment_trends
+    description: "Grain: one school year, district key, school key, and grade level."
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [school_year, district_key, school_key, grade_level]
+    columns:
+      - name: school_year
+        data_tests: [not_null]
+      - name: district_key
+        data_tests: [not_null]
+      - name: school_key
+        data_tests: [not_null]
+      - name: grade_level
+        data_tests: [not_null]
+      - name: enrolled_student_count
+        data_tests: [not_null]
+      - name: source_data_updated_at
+        data_tests: [not_null]
+
+  - name: mart_data_quality_scorecard
+    description: "Grain: one pipeline run and its latest data-quality rule run."
+    columns:
+      - name: pipeline_run_id
+        data_tests: [unique, not_null]
+      - name: data_quality_rule_run_id
+        data_tests: [unique, not_null]
+      - name: blocking_error_count
+        data_tests: [not_null]
+      - name: warning_count
+        data_tests: [not_null]
+      - name: data_quality_pass_rate
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: quality_finished_at
+        data_tests: [not_null]
+
+  - name: mart_pipeline_health
+    description: "Grain: one audited pipeline run, including runs with no source delivery."
+    columns:
+      - name: pipeline_run_id
+        data_tests: [unique, not_null]
+      - name: pipeline_name
+        data_tests: [not_null]
+      - name: pipeline_status
+        data_tests: [not_null]
+      - name: pipeline_success_rate
+        data_tests:
+          - not_null
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+
+  - name: mart_reporting_readiness
+    description: >
+      Grain: one audited pipeline run with its latest quality, freshness, and assessment
+      readiness evidence when available.
+    columns:
+      - name: pipeline_run_id
+        data_tests: [unique, not_null]
+      - name: pipeline_name
+        data_tests: [not_null]
+      - name: pipeline_success_rate
+        data_tests:
+          - not_null
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: data_quality_pass_rate
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: assessment_proficiency_rate
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 1}
+      - name: reporting_readiness_score
+        data_tests:
+          - value_between:
+              arguments: {minimum: 0, maximum: 100}

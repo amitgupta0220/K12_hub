@@ -28,9 +28,35 @@ def test_complete_configuration_is_valid() -> None:
     assert configuration.contracts["assessments"].file_format is FileFormat.XLSX
     assert configuration.privacy.small_group_threshold == 10
     assert all(
-        set(metric.model_fields_set) == {"name", "description"}
+        set(metric.model_fields_set)
+        == {
+            "name",
+            "description",
+            "formula",
+            "grain",
+            "allowed_dimensions",
+            "source_model",
+            "refresh_expectation",
+            "privacy_classification",
+        }
         for metric in configuration.metrics.metrics
     )
+    assert {
+        "enrolled_student_count",
+        "possible_attendance_days",
+        "attended_days",
+        "attendance_rate",
+        "chronically_absent_student_count",
+        "chronic_absenteeism_rate",
+        "records_processed",
+        "records_rejected",
+        "blocking_error_count",
+        "warning_count",
+        "data_quality_pass_rate",
+        "pipeline_success_rate",
+        "source_freshness_hours",
+        "reporting_readiness_score",
+    } <= {metric.name for metric in configuration.metrics.metrics}
     assert {rule.rule_id for rule in configuration.data_quality_rules.rules} == {
         "STU-001",
         "STU-002",
