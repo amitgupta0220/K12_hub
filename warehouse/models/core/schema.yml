@@ -1,0 +1,253 @@
+version: 2
+
+models:
+  - name: dim_district
+    description: "Grain: one trusted district identifier, with latest deterministic lineage."
+    columns:
+      - name: district_key
+        description: Stable warehouse key for the district.
+        data_tests: [unique, not_null]
+      - name: source_district_id
+        description: Restricted source identifier retained only for lineage.
+        data_tests: [unique, not_null]
+      - name: pipeline_run_id
+        data_tests: [not_null]
+      - name: source_file_id
+        data_tests: [not_null]
+
+  - name: dim_school
+    description: "Grain: one trusted school identifier, with its district and latest lineage."
+    columns:
+      - name: school_key
+        description: Stable warehouse key for the school.
+        data_tests: [unique, not_null]
+      - name: district_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_district')
+                field: district_key
+      - name: source_school_id
+        description: Restricted source identifier retained only for lineage.
+        data_tests: [unique, not_null]
+
+  - name: dim_student
+    description: >
+      Grain: one trusted student token. Names, local student numbers, and direct student
+      identifiers are intentionally omitted.
+    columns:
+      - name: student_key
+        description: Stable salted token derived from the source student identifier.
+        data_tests: [unique, not_null]
+      - name: district_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_district')
+                field: district_key
+      - name: school_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_school')
+                field: school_key
+      - name: pipeline_run_id
+        data_tests: [not_null]
+      - name: source_file_id
+        data_tests: [not_null]
+      - name: source_row_number
+        data_tests: [not_null]
+
+  - name: dim_date
+    description: "Grain: one calendar date spanning the accepted trusted-core event range."
+    columns:
+      - name: date_key
+        data_tests: [unique, not_null]
+      - name: calendar_date
+        data_tests: [unique, not_null]
+
+  - name: dim_academic_year
+    description: "Grain: one academic-year code represented by trusted enrollment or assessment."
+    columns:
+      - name: academic_year_key
+        data_tests: [unique, not_null]
+      - name: academic_year
+        data_tests: [unique, not_null]
+
+  - name: dim_source_system
+    description: "Grain: one configured source system represented by trusted accepted records."
+    columns:
+      - name: source_system_key
+        data_tests: [unique, not_null]
+      - name: source_system_code
+        data_tests: [unique, not_null]
+
+  - name: fact_enrollment
+    description: >
+      Grain: one deterministically selected enrollment period per source enrollment identifier.
+      Incremental merge reruns update the stable enrollment key without inserting duplicates.
+    columns:
+      - name: enrollment_key
+        data_tests: [unique, not_null]
+      - name: student_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_student')
+                field: student_key
+      - name: school_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_school')
+                field: school_key
+      - name: district_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_district')
+                field: district_key
+      - name: academic_year_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_academic_year')
+                field: academic_year_key
+      - name: source_system_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_source_system')
+                field: source_system_key
+      - name: entry_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: exit_date_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: pipeline_run_id
+        data_tests: [not_null]
+      - name: source_file_id
+        data_tests: [not_null]
+      - name: source_row_number
+        data_tests: [not_null]
+
+  - name: fact_daily_attendance
+    description: >
+      Grain: one deterministically selected daily record per student token, school, and
+      instructional date. Incremental merge reruns preserve one fact per stable key.
+    columns:
+      - name: daily_attendance_key
+        data_tests: [unique, not_null]
+      - name: student_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_student')
+                field: student_key
+      - name: school_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_school')
+                field: school_key
+      - name: district_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_district')
+                field: district_key
+      - name: source_system_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_source_system')
+                field: source_system_key
+      - name: attendance_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: pipeline_run_id
+        data_tests: [not_null]
+      - name: source_file_id
+        data_tests: [not_null]
+      - name: source_row_number
+        data_tests: [not_null]
+
+  - name: fact_assessment
+    description: >
+      Grain: one deterministically selected assessment event per source assessment identifier.
+      Incremental merge reruns update the stable assessment key without inserting duplicates.
+    columns:
+      - name: assessment_key
+        data_tests: [unique, not_null]
+      - name: student_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_student')
+                field: student_key
+      - name: school_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_school')
+                field: school_key
+      - name: district_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_district')
+                field: district_key
+      - name: academic_year_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_academic_year')
+                field: academic_year_key
+      - name: source_system_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_source_system')
+                field: source_system_key
+      - name: assessment_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: pipeline_run_id
+        data_tests: [not_null]
+      - name: source_file_id
+        data_tests: [not_null]
+      - name: source_row_number
+        data_tests: [not_null]

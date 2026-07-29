@@ -12,7 +12,8 @@ strict configuration-driven source contracts, deterministic synthetic-data gener
 logging, idempotent raw-file ingestion into MinIO with PostgreSQL audit metadata, connectivity
 checks, contract-driven CSV/JSON Lines/XLSX parsing, transactional staging loads, row quarantine
 and reconciliation, a configuration-driven data-quality rule engine with dashboard-ready audit
-results, and quality tooling. Analytical models are not implemented yet.
+results, trusted dbt core dimensions and facts, and quality tooling. Downstream marts are not
+implemented yet.
 
 ## Basic setup
 
@@ -74,6 +75,16 @@ python -m k12hub.cli validate-data --pipeline-run-id <id>
 Blocking failures are copied to quarantine. Non-blocking failures remain available and are flagged
 in the audit tables. See `docs/data_quality_rules.md` for the rule catalog and generator mapping.
 
+Build the trusted core warehouse after exporting the PostgreSQL variables shown in `.env.example`,
+a private stable `K12HUB_HASH_SALT`, and the aggregate `K12HUB_EXPECTED_METRICS_PATH`:
+
+```sh
+make dbt-debug
+make dbt-build
+```
+
+See `docs/data_model.md` for model grains, privacy boundaries, lineage, and relationships.
+
 | Service | Purpose | Local port |
 | --- | --- | --- |
 | PostgreSQL | Warehouse and operational metadata database (`k12hub`) | `5432` |
@@ -101,6 +112,11 @@ make db-downgrade
 make migration-test
 make ingest-demo
 make validate-demo
+make dbt-debug
+make dbt-run
+make dbt-test
+make dbt-build
+make dbt-docs
 python -m k12hub.cli validate-config
 python -m k12hub.cli generate-data --help
 python -m k12hub.cli ingest --help

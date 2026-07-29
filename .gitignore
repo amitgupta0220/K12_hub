@@ -18,6 +18,10 @@ htmlcov/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+warehouse/logs/
+warehouse/target/
+warehouse/dbt_packages/
+warehouse/.user.yml
 
 # Editors and operating systems
 .DS_Store

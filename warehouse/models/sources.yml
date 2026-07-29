@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: staging
+    description: Contract-validated synthetic source rows awaiting trusted-core transformation.
+    schema: staging
+    tables:
+      - name: sis_student
+        description: One typed synthetic SIS student row per immutable source-file row.
+      - name: sis_enrollment
+        description: One typed synthetic SIS enrollment row per immutable source-file row.
+      - name: attendance_event
+        description: One typed synthetic daily attendance row per immutable source-file row.
+      - name: assessment_event
+        description: One typed synthetic assessment event per immutable source-file row.

@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Prompt 8 — configuration-driven data-quality validation.
+Prompt 9 — dbt trusted core models.
 
 ## Completed work
 
@@ -99,6 +99,17 @@ Prompt 8 — configuration-driven data-quality validation.
   volume warnings, persistence, quarantine behavior, and rerun safety.
 - Changed Make dependency installation to use a `pyproject.toml`-sensitive environment stamp so
   repeated quality commands do not require unnecessary package-index access.
+- Added dbt Core with the PostgreSQL adapter and an environment-only connection profile.
+- Added four staging sources and a trusted-input boundary requiring a latest passed quality run
+  while excluding row-level blocking quarantine matches.
+- Added six core dimensions and three incrementally merged core facts with documented grains,
+  deterministic source-version selection, and complete pipeline/source lineage.
+- Tokenized student, enrollment, and assessment identifiers with an environment-provided stable
+  salt; names, local student numbers, and direct student identifiers do not enter core.
+- Added 86 dbt tests covering unique and non-null keys, dimension relationships, direct-identifier
+  absence, generator expected metrics, and the no-orphan student/school gate.
+- Added dbt Make commands, aggregate metric-variable validation, and the trusted-core entity model
+  documentation.
 
 ## Validation results
 
@@ -204,6 +215,22 @@ Prompt 8 — configuration-driven data-quality validation.
 - pytest passed 65 unit tests with 11 integration tests deselected; unit-test coverage was 80%.
 - The complete integration suite passed 11 tests against local PostgreSQL and MinIO; integration
   coverage was 85%.
+- `make dbt-debug` passed with dbt Core 1.10.22 and dbt-postgres 1.9.1.
+- `make dbt-build` passed 94 nodes on the initial build: 3 incremental facts, 6 table dimensions,
+  and 85 data tests.
+- A second `make dbt-build` passed with PostgreSQL merge results of 25 enrollments, 4,357 daily
+  attendance facts, and 50 assessments, confirming reruns remained duplicate-free.
+- The expected-metrics test matched 25 students, 25 enrollments, 4,357 daily records, 50
+  assessments, 180 instructional days, and all generated rates for school year 2025-2026.
+- The Prompt 9 no-orphan student/school gate passed for every core fact.
+- The final Prompt 9 build passed all 95 nodes, including the schema-level test that prohibits
+  direct student identifier columns in the student dimension and core facts.
+- `make dbt-docs` generated the dbt catalog successfully after receiving the same validated
+  aggregate expected-metrics variables used by the build.
+- The first Prompt 9 `make verify` attempt stopped on formatting, then import ordering, then a
+  missing Python package marker; each finding was corrected before the complete gate passed.
+- `make verify` passed Ruff formatting and lint for 37 files, mypy for 32 source files, and 70 unit
+  tests with 11 integration tests deselected; unit-test coverage remained 80%.
 
 ## Known issues
 
@@ -214,5 +241,4 @@ Prompt 8 — configuration-driven data-quality validation.
 ## Next recommended phase
 
 Provide the next numbered prompt. No generated student-level data is tracked in version control.
-No Airflow, dbt models, Streamlit, conformed student warehouse tables, conformed attendance
-warehouse tables, or analytical models have been started.
+No Airflow, Streamlit, downstream marts, or aggregate dashboard models have been started.

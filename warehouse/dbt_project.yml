@@ -1,0 +1,23 @@
+name: k12hub
+version: "1.0.0"
+config-version: 2
+
+profile: k12hub
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  k12hub:
+    trusted:
+      +materialized: ephemeral
+    core:
+      +schema: core
+      +materialized: table
+      dimensions:
+        +tags: ["core", "dimension"]
+      facts:
+        +tags: ["core", "fact"]

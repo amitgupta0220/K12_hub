@@ -318,3 +318,34 @@ Disabling or tuning a supported rule requires configuration rather than evaluato
 new rule type still requires typed code and tests. Repeated validation remains auditable and the
 quarantine uniqueness key prevents duplicate blocking records for the same immutable source row
 and rule.
+
+---
+
+## ADR-0012: Build trusted core models from passed quality runs with salted student tokens
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Typed staging tables preserve direct student identifiers and every accepted source version. The
+trusted analytical layer must be rerunnable, exclude blocking failures, preserve evidence lineage,
+and prevent direct identifiers from propagating into marts.
+
+### Decision
+
+Use dbt Core with PostgreSQL under `warehouse/`. Admit only staging rows whose pipeline has a latest
+passed quality run, and exclude any row matched to a blocking quarantine record. Resolve repeated
+business grains with an explicit latest-pipeline, source-file, and source-row ordering.
+
+Generate student, enrollment, and assessment warehouse keys with a private stable
+`K12HUB_HASH_SALT` supplied through the environment. Omit names, local student numbers, and source
+student identifiers from core. Preserve only operational pipeline, source-file, source-row, schema,
+and ingestion lineage. Materialize facts incrementally with merge semantics and stable unique keys.
+
+### Consequences
+
+Trusted core facts are idempotent across reruns and cannot contain orphan student or school keys
+without failing the dbt build. Changing the salt requires a coordinated full refresh because all
+tokenized keys change. Only passed pipeline versions enter core; corrections must be re-ingested
+and revalidated before dbt can select them.

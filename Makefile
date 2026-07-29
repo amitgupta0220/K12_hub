@@ -3,7 +3,7 @@ PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 INSTALL_STAMP := $(VENV)/.installed
 
-.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current ingest-demo validate-demo
+.PHONY: install format lint typecheck test integration-test migration-test verify infra-up infra-down infra-reset infra-logs infra-check db-upgrade db-downgrade db-current ingest-demo validate-demo dbt-debug dbt-run dbt-test dbt-build dbt-docs
 
 install: $(INSTALL_STAMP)
 
@@ -75,3 +75,30 @@ validate-demo: install
 		pipeline_run_id="$$(printf "%s\n" "$$output" | sed -n "s/.*pipeline_run_id=\\([^ ]*\\).*/\\1/p")"; \
 		test -n "$$pipeline_run_id"; \
 		$(PYTHON) -m k12hub.cli validate-data --pipeline-run-id "$$pipeline_run_id"
+
+DBT := $(VENV)/bin/dbt
+DBT_DIR := warehouse
+DBT_ARGS := --project-dir $(DBT_DIR) --profiles-dir $(DBT_DIR)
+
+dbt-debug: install
+	@test -n "$$K12HUB_HASH_SALT" || { printf "K12HUB_HASH_SALT is required.\n"; exit 1; }
+	$(DBT) debug $(DBT_ARGS)
+
+dbt-run: install
+	@test -n "$$K12HUB_HASH_SALT" || { printf "K12HUB_HASH_SALT is required.\n"; exit 1; }
+	$(DBT) run $(DBT_ARGS)
+
+dbt-test: install
+	@test -n "$$K12HUB_HASH_SALT" || { printf "K12HUB_HASH_SALT is required.\n"; exit 1; }
+	@test -n "$$K12HUB_EXPECTED_METRICS_PATH" || { printf "K12HUB_EXPECTED_METRICS_PATH is required.\n"; exit 1; }
+	$(DBT) test $(DBT_ARGS) --vars "$$($(PYTHON) scripts/dbt_expected_metrics.py "$$K12HUB_EXPECTED_METRICS_PATH")"
+
+dbt-build: install
+	@test -n "$$K12HUB_HASH_SALT" || { printf "K12HUB_HASH_SALT is required.\n"; exit 1; }
+	@test -n "$$K12HUB_EXPECTED_METRICS_PATH" || { printf "K12HUB_EXPECTED_METRICS_PATH is required.\n"; exit 1; }
+	$(DBT) build $(DBT_ARGS) --vars "$$($(PYTHON) scripts/dbt_expected_metrics.py "$$K12HUB_EXPECTED_METRICS_PATH")"
+
+dbt-docs: install
+	@test -n "$$K12HUB_HASH_SALT" || { printf "K12HUB_HASH_SALT is required.\n"; exit 1; }
+	@test -n "$$K12HUB_EXPECTED_METRICS_PATH" || { printf "K12HUB_EXPECTED_METRICS_PATH is required.\n"; exit 1; }
+	$(DBT) docs generate $(DBT_ARGS) --vars "$$($(PYTHON) scripts/dbt_expected_metrics.py "$$K12HUB_EXPECTED_METRICS_PATH")"
