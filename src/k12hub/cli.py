@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from k12hub.contracts import ConfigurationFileError, load_configuration
+from k12hub.generator import ERROR_TYPES, GeneratorOptions, generate_data
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,6 +25,25 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("config"),
         help="configuration directory (default: config)",
+    )
+    generate_parser = subparsers.add_parser(
+        "generate-data",
+        help="generate a deterministic synthetic K-12 dataset",
+    )
+    generate_parser.add_argument("--seed", type=int, default=2026)
+    generate_parser.add_argument("--students", type=int, default=1500)
+    generate_parser.add_argument("--school-year", default="2025-2026")
+    generate_parser.add_argument("--error-rate", type=float, default=0.0)
+    generate_parser.add_argument(
+        "--enabled-error-types",
+        nargs="*",
+        choices=ERROR_TYPES,
+        default=[],
+    )
+    generate_parser.add_argument(
+        "--output-directory",
+        type=Path,
+        default=Path("data/generated"),
     )
     return parser
 
@@ -44,6 +64,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"{len(configuration.data_quality_rules.rules)} data-quality rules, "
             f"{len(configuration.metrics.metrics)} metrics"
         )
+        return 0
+    if args.command == "generate-data":
+        try:
+            options = GeneratorOptions(
+                seed=args.seed,
+                students=args.students,
+                school_year=args.school_year,
+                error_rate=args.error_rate,
+                enabled_error_types=tuple(args.enabled_error_types),
+                output_directory=args.output_directory,
+            )
+        except ValueError as error:
+            print(f"Generator arguments invalid: {error}", file=sys.stderr)
+            return 2
+        result = generate_data(options)
+        print(f"Synthetic dataset generated: {result.output_path}")
         return 0
     return 2
 

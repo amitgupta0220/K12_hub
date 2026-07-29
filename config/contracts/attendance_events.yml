@@ -1,12 +1,15 @@
 source_name: attendance_events
 source_system: simulated_attendance
 description: Synthetic daily student attendance export.
-file_pattern: "attendance_events_*.jsonl"
+file_pattern: "attendance_events.jsonl"
 file_format: jsonl
 expected_fields:
   - name: student_id
     data_type: string
     sensitive_classification: direct_identifier
+  - name: district_id
+    data_type: string
+    sensitive_classification: quasi_identifier
   - name: school_id
     data_type: string
     sensitive_classification: quasi_identifier
@@ -39,6 +42,7 @@ expected_fields:
     sensitive_classification: operational
 required_fields:
   - student_id
+  - district_id
   - school_id
   - instructional_date
   - attendance_status

@@ -8,8 +8,9 @@ K-12 Data Reliability Hub is an OAISD-inspired, local-first portfolio project de
 
 The repository currently provides the typed Python package foundation, local PostgreSQL and MinIO
 infrastructure, Alembic-managed operational metadata schemas, environment-based configuration,
-strict configuration-driven source contracts, structured logging, connectivity checks, and
-quality tooling. Data pipelines and analytical models are not implemented yet.
+strict configuration-driven source contracts, deterministic synthetic-data generation, structured
+logging, connectivity checks, and quality tooling. Data pipelines and analytical models are not
+implemented yet.
 
 ## Basic setup
 
@@ -24,6 +25,16 @@ The project uses safe local defaults, so copying the example environment file is
 
 Start the local services with `make infra-up` and verify them with `make infra-check`.
 Initialize or update the operational database schemas with `make db-upgrade`.
+
+Generate a fully synthetic dataset with:
+
+```sh
+python -m k12hub.cli generate-data --seed 2026 --students 1500 --school-year 2025-2026
+```
+
+Generated runs are written beneath `data/generated/`, are excluded from version control, and
+include a manifest with record counts and SHA-256 checksums. Use `--help` to see error-injection
+and output-directory options.
 
 | Service | Purpose | Local port |
 | --- | --- | --- |
@@ -51,6 +62,7 @@ make db-current
 make db-downgrade
 make migration-test
 python -m k12hub.cli validate-config
+python -m k12hub.cli generate-data --help
 ```
 
 ## Synthetic-data disclaimer

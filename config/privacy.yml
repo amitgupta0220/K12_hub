@@ -20,6 +20,7 @@ allowed_aggregate_dimensions:
   - academic_year
   - assessment_name
   - attendance_status
+  - district_id
   - grade_level
   - performance_level
   - school_id

@@ -1,7 +1,7 @@
 source_name: sis_students
 source_system: simulated_sis
 description: Synthetic SIS student export.
-file_pattern: "sis_students_*.csv"
+file_pattern: "students.csv"
 file_format: csv
 expected_fields:
   - name: student_id
@@ -45,6 +45,9 @@ expected_fields:
       - "11"
       - "12"
     sensitive_classification: quasi_identifier
+  - name: district_id
+    data_type: string
+    sensitive_classification: quasi_identifier
   - name: school_id
     data_type: string
     sensitive_classification: quasi_identifier
@@ -58,6 +61,7 @@ required_fields:
   - last_name
   - birth_date
   - grade_level
+  - district_id
   - school_id
   - active
 natural_key:

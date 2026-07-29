@@ -184,3 +184,36 @@ Invalid or inconsistent configuration fails before ingestion begins, and contrac
 visible in version control. Adding new formats, field types, rule types, or configuration keys
 requires an intentional model change and tests. The Python 3.9 runtime requires a small annotation
 evaluation compatibility package for Pydantic's modern type syntax.
+
+---
+
+## ADR-0008: Generate synthetic data from a clean deterministic baseline
+
+- **Status:** Accepted
+- **Date:** 2026-07-29
+
+### Context
+
+Future ingestion and data-quality phases need realistic student-level inputs, known aggregate
+answers, and deliberately invalid records without using real student information or relying on
+mutable external sources. Byte-for-byte reproducibility must include XLSX output, whose container
+metadata is normally variable.
+
+### Decision
+
+Generate identities algorithmically with explicit `SYN-` identifiers and synthetic name labels.
+Derive the regional hierarchy, 180-day calendar, relationships, distributions, and records from a
+seeded random-number generator. Normalize XLSX archive timestamps and member ordering so identical
+arguments produce identical files.
+
+Calculate expected aggregate metrics from the valid baseline before optional error injection.
+Apply requested error types afterward and record both baseline and emitted counts in the manifest.
+Derive the run identifier from generation arguments, excluding the parent output directory. Keep
+all generated runs under the ignored `data/generated/` boundary.
+
+### Consequences
+
+Tests can compare exact checksums and later pipeline phases can distinguish trusted expected
+metrics from intentionally corrupt inputs. A changed seed or generation argument produces a
+different run. Generated student-level files remain local and uncommitted; only generator code,
+contracts, and deterministic tests are versioned.
